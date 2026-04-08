@@ -15,18 +15,18 @@ Opciones:
 ---
 
 ## P2 — Integración actual
-**"Hoy, ¿qué tan incorporada dirías que está la IA en tu forma de trabajar?"**
+**"¿Qué tan incorporada que está la IA en tu forma de trabajar?"**
 
 Opciones:
-- La uso de forma bastante habitual
-- La uso de vez en cuando para tareas puntuales
+- La uso todos los días
+- La uso de vez en cuando
 - La probé, pero todavía no forma parte de mi rutina
 - Aún no encontré una forma clara de aplicarla
 
 ---
 
 ## P3 — Tipos de uso (multi-select)
-**"¿Para qué tipo de tareas la usaste o podrías usarla?"**
+**"¿Para qué tipo de tareas la usás? Marcá una o varias"**
 
 Opciones (selección múltiple):
 - Investigación de mercado
@@ -46,10 +46,10 @@ Opciones (selección múltiple):
 
 Campo de texto abierto.
 
-Repregunta opcional e inteligente (activar si la respuesta sugiere un caso prometedor):
+Repregunta inteligente (activar si la respuesta sugiere un caso prometedor):
 **"¿Podés contarme en 1 o 2 líneas qué tarea era, qué herramienta usaste y qué cambió en el resultado?"**
 
-La detección de "caso prometedor" puede hacerse con IA o con heurística simple (longitud de respuesta > X caracteres, palabras clave como "ahorré", "mejoré", "logré", etc.).
+La detección de "caso prometedor" debe hacerse con IA. Si no funciona, con heurística simple (longitud de respuesta > 100 caracteres, palabras clave como "ahorré", "mejoré", "logré", etc.).
 
 ---
 
@@ -61,7 +61,7 @@ Opciones (selección única):
 - No tengo tiempo para explorarla
 - No sé usarla
 - Tengo dudas sobre seguridad / confidencialidad
-- No tengo acceso / herramientas adecuadas
+- No tengo acceso a herramientas pagas
 - No confío en los resultados
 - No veo necesidad
 - Otra

@@ -59,8 +59,8 @@ Mide si el participante identifica una oportunidad concreta y accionable.
 | 0–2 | OBSERVADOR |
 | 3–5 | EXPLORADOR |
 | 6–8 | USUARIO ACTIVO |
-| 9–10 | MULTIPLICADOR |
-| 11–12 | REFERENTE |
+| 9–12 | MULTIPLICADOR |
+
 
 ### Descripción de perfiles
 
@@ -73,10 +73,7 @@ Probó algunas herramientas pero de forma esporádica. Hay interés pero falta c
 **USUARIO ACTIVO (6–8)**
 Usa IA de forma regular para tareas concretas. Ya encontró usos útiles, pero todavía no está integrado de forma consistente en su flujo de trabajo.
 
-**MULTIPLICADOR (9–10)**
-Integra IA de forma habitual y puede articular valor concreto. Tiene potencial para compartir aprendizajes con otros.
-
-**REFERENTE (11–12)**
+**MULTIPLICADOR (9–12)**
 Uso avanzado, casos claros de impacto, visión de oportunidad. Puede ser referente interno y acelerador de adopción en el equipo.
 
 ---
