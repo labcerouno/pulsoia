@@ -105,3 +105,38 @@ export function buildResultsCsv(
 
   return [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
 }
+
+export function buildParticipantsCsv(
+  rows: Array<{
+    full_name: string
+    corporate_email: string
+    area: string | null
+    management_unit: string | null
+    role: string | null
+    link: string
+    status: string
+  }>
+): string {
+  const headers = ['Nombre', 'Email', 'Area', 'Gerencia', 'Cargo', 'Link', 'Estado']
+
+  const escape = (v: string | null | undefined | boolean | number) => {
+    if (v === null || v === undefined) return ''
+    const s = String(v)
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+      return `"${s.replace(/"/g, '""')}"`
+    }
+    return s
+  }
+
+  const data = rows.map((r) => [
+    escape(r.full_name),
+    escape(r.corporate_email),
+    escape(r.area),
+    escape(r.management_unit),
+    escape(r.role),
+    escape(r.link),
+    escape(r.status),
+  ])
+
+  return [headers.join(','), ...data.map((r) => r.join(','))].join('\n')
+}

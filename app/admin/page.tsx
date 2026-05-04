@@ -19,7 +19,6 @@ export default async function AdminDashboard() {
     { label: 'Iniciaron', value: stats.total_started },
     { label: 'Completaron', value: stats.total_completed },
     { label: 'Tasa de completitud', value: `${stats.completion_rate}%` },
-    { label: 'Score promedio', value: stats.avg_score !== null ? `${stats.avg_score}/12` : '—' },
   ]
 
   return (
@@ -29,7 +28,7 @@ export default async function AdminDashboard() {
       </h1>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         {statCards.map(card => (
           <div
             key={card.label}

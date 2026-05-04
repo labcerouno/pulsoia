@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Pulse IA — BCR',
+  title: 'Pulso IA',
   description: 'Diagnóstico institucional de adopción de inteligencia artificial. Bolsa de Comercio de Rosario.',
 }
 

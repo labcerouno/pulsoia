@@ -41,7 +41,7 @@ export default async function ResultsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: '#1E293B', borderBottom: '1px solid #334155' }}>
-                  {['Nombre', 'Area', 'Perfil', 'Score', 'Uso', 'Integ.', 'Valor', 'Oport.', 'Completado'].map(h => (
+                  {['Nombre', 'Area', 'Perfil', 'Completado'].map(h => (
                     <th
                       key={h}
                       className="text-left px-4 py-3 text-xs font-semibold tracking-wider uppercase"
@@ -83,13 +83,6 @@ export default async function ResultsPage() {
                           </span>
                         ) : '—'}
                       </td>
-                      <td className="px-4 py-3 font-semibold" style={{ color: '#F8FAFC' }}>
-                        {r.score_total ?? '—'}
-                      </td>
-                      <td className="px-4 py-3" style={{ color: '#94A3B8' }}>{r.score_usage ?? '—'}</td>
-                      <td className="px-4 py-3" style={{ color: '#94A3B8' }}>{r.score_integration ?? '—'}</td>
-                      <td className="px-4 py-3" style={{ color: '#94A3B8' }}>{r.score_value_signal ?? '—'}</td>
-                      <td className="px-4 py-3" style={{ color: '#94A3B8' }}>{r.score_opportunity_clarity ?? '—'}</td>
                       <td className="px-4 py-3 text-xs" style={{ color: '#64748B' }}>
                         {r.completed_at
                           ? new Date(r.completed_at).toLocaleDateString('es-AR', {

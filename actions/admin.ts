@@ -1,8 +1,19 @@
 'use server'
 
+import { cookies } from 'next/headers'
 import { createServerClient } from '@/lib/supabase/server'
-import { parseCsvParticipants, buildResultsCsv } from '@/lib/csv'
+import { parseCsvParticipants, buildParticipantsCsv, buildResultsCsv } from '@/lib/csv'
 import { generateToken } from '@/lib/tokens'
+
+// Helper to get current user ID from cookies
+async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies()
+    return cookieStore.get('admin_user_id')?.value || null
+  } catch {
+    return null
+  }
+}
 
 export interface ImportResult {
   success: boolean
@@ -18,6 +29,9 @@ export interface ImportResult {
 }
 
 export async function importParticipants(formData: FormData): Promise<ImportResult> {
+  const userId = await getCurrentUserId()
+  if (!userId) return { success: false, imported: 0, skipped: 0, errors: ['Usuario no autenticado'], participants: [] }
+
   const file = formData.get('file') as File | null
 
   if (!file) {
@@ -78,6 +92,7 @@ export async function importParticipants(formData: FormData): Promise<ImportResu
         access_token: token,
         token_status: 'unused',
         invited_at: new Date().toISOString(),
+        imported_by_user_id: userId,
       })
 
       if (error) {
@@ -115,11 +130,15 @@ export interface DashboardStats {
 }
 
 export async function getStats(): Promise<DashboardStats> {
+  const userId = await getCurrentUserId()
+  if (!userId) return { total_invited: 0, total_started: 0, total_completed: 0, completion_rate: 0, avg_score: null, profile_distribution: {} }
+
   const supabase = createServerClient()
 
   const { data: participants } = await supabase
     .from('participants')
     .select('token_status, started_at, completed_at')
+    .eq('imported_by_user_id', userId)
 
   const total_invited = participants?.length ?? 0
   const total_started = participants?.filter(p => p.started_at !== null).length ?? 0
@@ -173,11 +192,15 @@ export interface ResultRow {
 }
 
 export async function getResults(): Promise<ResultRow[]> {
+  const userId = await getCurrentUserId()
+  if (!userId) return []
+
   const supabase = createServerClient()
 
   const { data: participants } = await supabase
     .from('participants')
     .select('id, full_name, corporate_email, area, management_unit, role, completed_at')
+    .eq('imported_by_user_id', userId)
     .eq('token_status', 'used')
     .order('completed_at', { ascending: false })
 
@@ -221,4 +244,95 @@ export async function getResults(): Promise<ResultRow[]> {
 export async function exportResultsCsv(): Promise<string> {
   const results = await getResults()
   return buildResultsCsv(results)
+}
+
+export interface ParticipantAdminRow {
+  id: string
+  full_name: string
+  corporate_email: string
+  area: string | null
+  management_unit: string | null
+  role: string | null
+  access_token: string
+  completed_at: string | null
+  token_status: 'unused' | 'used' | 'expired'
+  status_label: string
+  link: string
+}
+
+export async function getParticipantsAdmin(): Promise<ParticipantAdminRow[]> {
+  const userId = await getCurrentUserId()
+  if (!userId) return []
+
+  const supabase = createServerClient()
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+  const { data: participants, error } = await supabase
+    .from('participants')
+    .select('id, full_name, corporate_email, area, management_unit, role, access_token, completed_at, token_status')
+    .eq('imported_by_user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error || !participants) return []
+
+  return participants.map((p) => {
+    const done = p.token_status === 'used' && !!p.completed_at
+    return {
+      id: p.id,
+      full_name: p.full_name,
+      corporate_email: p.corporate_email,
+      area: p.area,
+      management_unit: p.management_unit,
+      role: p.role,
+      access_token: p.access_token,
+      completed_at: p.completed_at,
+      token_status: p.token_status,
+      status_label: done ? 'Concluida / PDF listo' : 'Pendiente',
+      link: `${appUrl}/bcr?t=${p.access_token}`,
+    }
+  })
+}
+
+export async function exportParticipantsCsv(): Promise<string> {
+  const rows = await getParticipantsAdmin()
+  return buildParticipantsCsv(
+    rows.map((r) => ({
+      full_name: r.full_name,
+      corporate_email: r.corporate_email,
+      area: r.area,
+      management_unit: r.management_unit,
+      role: r.role,
+      link: r.link,
+      status: r.status_label,
+    }))
+  )
+}
+
+export async function deleteParticipant(id: string): Promise<{ success: boolean; error?: string }> {
+  if (!id) return { success: false, error: 'ID inválido' }
+
+  const supabase = createServerClient()
+
+  const { error: responsesErr } = await supabase
+    .from('responses')
+    .delete()
+    .eq('participant_id', id)
+
+  if (responsesErr) return { success: false, error: responsesErr.message }
+
+  const { error: sessionsErr } = await supabase
+    .from('sessions')
+    .delete()
+    .eq('participant_id', id)
+
+  if (sessionsErr) return { success: false, error: sessionsErr.message }
+
+  const { error: participantErr } = await supabase
+    .from('participants')
+    .delete()
+    .eq('id', id)
+
+  if (participantErr) return { success: false, error: participantErr.message }
+
+  return { success: true }
 }

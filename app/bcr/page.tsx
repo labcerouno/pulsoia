@@ -75,7 +75,7 @@ export default async function BcrPage({ searchParams }: Props) {
         {/* Heading */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: C.text, marginBottom: 6, letterSpacing: '-0.02em' }}>
-            Pulse IA
+            Pulso IA
           </h1>
           <p style={{ fontSize: 14, color: C.textMuted, letterSpacing: '0.02em' }}>
             Diagnóstico institucional de adopción de IA
@@ -139,7 +139,7 @@ export default async function BcrPage({ searchParams }: Props) {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: 11, color: C.textDim, letterSpacing: '0.03em' }}>
-          BCR · Uso interno
+          Pulso IA · Uso interno
         </p>
       </div>
     </main>
@@ -173,7 +173,7 @@ function StatusScreen({ message, detail }: { message: string; detail?: string })
           <h2 style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 8 }}>{message}</h2>
           {detail && <p style={{ fontSize: 13, color: C.textMuted }}>{detail}</p>}
         </div>
-        <p style={{ marginTop: 20, fontSize: 11, color: C.textDim }}>BCR · Uso interno</p>
+        <p style={{ marginTop: 20, fontSize: 11, color: C.textDim }}>Pulso IA · Uso interno</p>
       </div>
     </main>
   )

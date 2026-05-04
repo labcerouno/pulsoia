@@ -17,35 +17,12 @@ const STEP_BY_LEVEL: Record<ProfileLabel, string> = {
   REFERENTE: 'Definí un plan de adopción por frente (operación, análisis, comunicación) y asigná un responsable por frente con objetivo semanal.',
 }
 
-function pickResource(response: {
-  q3_use_cases: string[] | null
-  q5_barrier: string | null
-  q5_barrier_other: string | null
-}): { label: string; url: string } {
-  const useCases = response.q3_use_cases ?? []
-  const barrier = (response.q5_barrier_other || response.q5_barrier || '').toLowerCase()
-
-  if (barrier.includes('seguridad') || barrier.includes('confidencial')) {
-    return { label: 'Guía de buenas prácticas de seguridad para IA', url: 'https://owasp.org/www-project-top-10-for-large-language-model-applications/' }
-  }
-  if (useCases.some((u) => u.toLowerCase().includes('excel') || u.toLowerCase().includes('análisis'))) {
-    return { label: 'Guía práctica para análisis de datos con IA', url: 'https://platform.openai.com/docs/guides/data-analysis' }
-  }
-  if (useCases.some((u) => u.toLowerCase().includes('transcribir') || u.toLowerCase().includes('llamada'))) {
-    return { label: 'Guía de transcripción y resumen de reuniones', url: 'https://platform.openai.com/docs/guides/speech-to-text' }
-  }
-  if (useCases.some((u) => u.toLowerCase().includes('informe') || u.toLowerCase().includes('texto'))) {
-    return { label: 'Guía de redacción profesional asistida por IA', url: 'https://platform.openai.com/docs/guides/text?api-mode=chat' }
-  }
-  return { label: 'Guía base de trabajo con IA para productividad', url: 'https://platform.openai.com/docs/guides/prompt-engineering' }
-}
-
 const STRENGTH_FALLBACK: Record<ProfileLabel, string> = {
-  OBSERVADOR: 'Estás en una etapa inicial. Con pasos chicos y consistentes vas a notar avances rápido.',
-  EXPLORADOR: 'Buen avance: ya estás probando IA en tu trabajo.',
-  'USUARIO ACTIVO': 'Excelente ritmo: ya convertiste IA en una herramienta de trabajo.',
-  MULTIPLICADOR: 'Gran nivel: ya estás generando impacto y podés impulsar a otros.',
-  REFERENTE: 'Nivel sobresaliente: tu experiencia puede acelerar a todo el equipo.',
+  OBSERVADOR: 'Estás en una etapa inicial. Con pasos chicos y consistentes vas a notar avances reales.',
+  EXPLORADOR: 'Ya empezaste a explorar IA en tu trabajo. El próximo paso es volver ese uso más constante.',
+  'USUARIO ACTIVO': 'Ya tenés un uso sostenido en algunas tareas y podés consolidarlo en procesos concretos.',
+  MULTIPLICADOR: 'Ya estás generando impacto real con IA y podés ayudar a que otras personas lo logren.',
+  REFERENTE: 'Tu uso de IA ya es avanzado y podés acelerar la adopción del equipo con ejemplos prácticos.',
 }
 
 export async function GET(req: NextRequest) {
@@ -60,7 +37,6 @@ export async function GET(req: NextRequest) {
 
   const { participant, response } = data
   const profile = (response.profile_label as ProfileLabel) ?? 'OBSERVADOR'
-  const resource = pickResource(response)
   const nextStep = toSecondPerson(response.next_step_recommendation || STEP_BY_LEVEL[profile])
   const actionPlan = buildActionPlan({
     profile,
@@ -74,22 +50,17 @@ export async function GET(req: NextRequest) {
   const pdfData: ResultPDFData = {
     name: participant.full_name,
     area: participant.area,
-    profile,
-    score: response.score_total ?? 0,
     strength: toSecondPerson(response.strength_summary || STRENGTH_FALLBACK[profile]),
     actionIntro: actionPlan.intro,
     actionPrompt: actionPlan.prompt,
-    opportunity: response.q6_opportunity_raw,
-    useCases: response.q3_use_cases,
-    tools: response.q1_tools_used,
-    resourceLabel: resource.label,
-    resourceUrl: resource.url,
+    closingMessage:
+      'Nos vemos en la próxima sesión en vivo del programa de capacitación de IA. Traé tus consultas así te podemos ayudar.',
   }
 
   const element = createElement(ResultPDF, { d: pdfData })
   const buffer = await renderToBuffer(element as ReactElement<DocumentProps>)
 
-  const filename = `pulse-ia-bcr-${participant.full_name.toLowerCase().replace(/\s+/g, '-')}.pdf`
+  const filename = `pulso-ia-${participant.full_name.toLowerCase().replace(/\s+/g, '-')}.pdf`
 
   return new NextResponse(new Uint8Array(buffer), {
     status: 200,

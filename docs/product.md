@@ -1,7 +1,7 @@
-# Producto: Pulse IA BCR
+# Producto: Pulse IA
 
 ## Descripción
-Mini diagnóstico institucional asistido por IA para BCR (Bolsa de Comercio de Rosario).
+Mini diagnóstico institucional asistido por IA.
 Pensado como versión cero de un sistema mayor de medición de adopción y madurez de IA en el trabajo (tipo mini "Proficiency Index").
 
 ## Qué NO es
@@ -30,7 +30,7 @@ Pensado como versión cero de un sistema mayor de medición de adopción y madur
 
 ### Pantalla 1 — Validación de token
 Si el token es válido y `unused`, mostrar:
-- Saludo personalizado con nombre: `"Hola Martín. Este acceso fue asignado a tu participación en el Pulse IA BCR."`
+- Saludo personalizado con nombre: `"Hola Martín. Este acceso fue asignado a tu participación en el diagnóstico Pulse IA."`
 - Breve explicación del propósito (no evaluación de desempeño, sí medición colectiva)
 - Tiempo estimado: 5–7 minutos
 - CTA claro: botón "Comenzar"
