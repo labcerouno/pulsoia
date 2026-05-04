@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { deleteParticipant, exportParticipantsCsv } from '@/actions/admin'
 import type { ParticipantAdminRow } from '@/actions/admin'
 
-export default function ParticipantsTable({ initialRows }: { initialRows: ParticipantAdminRow[] }) {
+export default function ParticipantsTable({ initialRows, company }: { initialRows: ParticipantAdminRow[]; company?: string }) {
   const [rows, setRows] = useState(initialRows)
   const [loadingExport, setLoadingExport] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -14,7 +14,7 @@ export default function ParticipantsTable({ initialRows }: { initialRows: Partic
   async function handleExport() {
     setLoadingExport(true)
     try {
-      const csv = await exportParticipantsCsv()
+      const csv = await exportParticipantsCsv(company)
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

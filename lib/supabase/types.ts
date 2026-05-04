@@ -12,6 +12,7 @@ export interface Participant {
   id: string
   full_name: string
   corporate_email: string
+  company: string | null
   area: string | null
   management_unit: string | null
   role: string | null

@@ -1,4 +1,4 @@
-import { getResults, exportResultsCsv } from '@/actions/admin'
+import { getCompanyOptions, getResults } from '@/actions/admin'
 
 export const dynamic = 'force-dynamic'
 import ExportButton from './ExportButton'
@@ -11,8 +11,14 @@ const PROFILE_COLORS: Record<string, string> = {
   REFERENTE: '#8B5CF6',
 }
 
-export default async function ResultsPage() {
-  const results = await getResults()
+interface Props {
+  searchParams: Promise<{ company?: string }>
+}
+
+export default async function ResultsPage({ searchParams }: Props) {
+  const params = await searchParams
+  const company = params.company?.trim() || ''
+  const [results, companies] = await Promise.all([getResults(company || undefined), getCompanyOptions()])
 
   return (
     <div>
@@ -20,7 +26,31 @@ export default async function ResultsPage() {
         <h1 className="text-xl font-semibold" style={{ color: '#F8FAFC' }}>
           Resultados
         </h1>
-        <ExportButton />
+        <div className="flex items-center gap-2">
+          <form method="get" className="flex items-center gap-2">
+            <select
+              name="company"
+              defaultValue={company}
+              className="rounded-lg px-3 py-2 text-sm"
+              style={{ background: '#1E293B', color: '#F8FAFC', border: '1px solid #334155' }}
+            >
+              <option value="">Todas las empresas</option>
+              {companies.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="px-3 py-2 rounded-lg text-sm"
+              style={{ background: '#334155', color: '#CBD5E1', border: '1px solid #475569' }}
+            >
+              Filtrar
+            </button>
+          </form>
+          <ExportButton company={company || undefined} />
+        </div>
       </div>
 
       {results.length === 0 ? (

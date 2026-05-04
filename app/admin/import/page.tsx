@@ -9,11 +9,12 @@ export default function ImportPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ImportResult | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
+  const [company, setCompany] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const file = fileRef.current?.files?.[0]
-    if (!file) return
+    if (!file || !company.trim()) return
 
     setLoading(true)
     setResult(null)
@@ -21,6 +22,7 @@ export default function ImportPage() {
     try {
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('company', company.trim())
       const res = await importParticipants(formData)
       setResult(res)
     } catch (err) {
@@ -61,6 +63,20 @@ export default function ImportPage() {
 
       <div className="rounded-2xl p-8 mb-6" style={{ background: '#1E293B', border: '1px solid #334155' }}>
         <form onSubmit={handleSubmit}>
+          <div className="mb-6">
+            <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: '#94A3B8' }}>
+              Empresa
+            </label>
+            <input
+              type="text"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="Nombre de la empresa"
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none"
+              style={{ background: '#0F172A', border: '1px solid #334155', color: '#F8FAFC' }}
+            />
+          </div>
+
           {/* File drop zone */}
           <label
             className="flex flex-col items-center justify-center w-full h-36 rounded-xl cursor-pointer transition-colors mb-6"
@@ -86,12 +102,12 @@ export default function ImportPage() {
 
           <button
             type="submit"
-            disabled={!fileName || loading}
+            disabled={!fileName || !company.trim() || loading}
             className="w-full py-3 rounded-xl text-sm font-semibold transition-colors"
             style={{
-              background: !fileName || loading ? '#1E293B' : '#3B82F6',
-              color: !fileName || loading ? '#475569' : '#fff',
-              border: `1px solid ${!fileName || loading ? '#334155' : '#3B82F6'}`,
+              background: !fileName || !company.trim() || loading ? '#1E293B' : '#3B82F6',
+              color: !fileName || !company.trim() || loading ? '#475569' : '#fff',
+              border: `1px solid ${!fileName || !company.trim() || loading ? '#334155' : '#3B82F6'}`,
             }}
           >
             {loading ? 'Importando...' : 'Importar participantes'}
