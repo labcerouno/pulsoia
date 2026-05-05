@@ -47,7 +47,7 @@ export default function AdminOTPPage() {
       })
 
       if (setCookieResponse.ok) {
-        router.push('/admin')
+        window.location.href = '/admin'
       } else {
         setError('Error al establecer sesión')
       }

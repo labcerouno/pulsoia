@@ -8,12 +8,15 @@ export default function ImportPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ImportResult | null>(null)
-  const [fileName, setFileName] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const [company, setCompany] = useState('')
+
+  const fileName = selectedFile?.name ?? null
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const file = fileRef.current?.files?.[0]
+    const file = selectedFile
     if (!file || !company.trim()) return
 
     setLoading(true)
@@ -39,8 +42,30 @@ export default function ImportPage() {
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setFileName(e.target.files?.[0]?.name ?? null)
+    const file = e.target.files?.[0] ?? null
+    setSelectedFile(file)
     setResult(null)
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files?.[0]
+    if (!file) return
+    if (!file.name.endsWith('.csv') && file.type !== 'text/csv') return
+    setSelectedFile(file)
+    setResult(null)
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(false)
+    }
   }
 
   function copyLink(link: string) {
@@ -58,7 +83,7 @@ export default function ImportPage() {
         <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>area</code>,{' '}
         <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>management_unit</code>,{' '}
         <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>role</code>.
-        También acepta columnas en español: <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>nombre</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>email</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>gerencia</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>cargo</code>.
+        También acepta columnas en español: <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>nombre</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>email</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>area</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>responde a, cargo</code>.
       </p>
 
       <div className="rounded-2xl p-8 mb-6" style={{ background: '#1E293B', border: '1px solid #334155' }}>
@@ -78,19 +103,26 @@ export default function ImportPage() {
           </div>
 
           {/* File drop zone */}
-          <label
-            className="flex flex-col items-center justify-center w-full h-36 rounded-xl cursor-pointer transition-colors mb-6"
+          <div
+            className="flex flex-col items-center justify-center w-full h-36 rounded-xl cursor-pointer transition-all mb-6"
             style={{
-              border: '2px dashed #334155',
-              background: '#0F172A',
+              border: `2px dashed ${isDragging ? '#3B82F6' : fileName ? '#1D4ED8' : '#334155'}`,
+              background: isDragging ? '#0F1F3A' : '#0F172A',
             }}
+            onClick={() => fileRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="mb-3">
-              <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke={isDragging ? '#3B82F6' : '#475569'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <p className="text-sm" style={{ color: '#64748B' }}>
-              {fileName ?? 'Seleccioná un archivo CSV'}
+            <p className="text-sm" style={{ color: isDragging ? '#93C5FD' : fileName ? '#F8FAFC' : '#64748B' }}>
+              {isDragging ? 'Soltá el archivo aquí' : (fileName ?? 'Arrastrá un CSV o hacé clic para seleccionar')}
             </p>
+            {!isDragging && !fileName && (
+              <p className="text-xs mt-1" style={{ color: '#334155' }}>Solo archivos .csv</p>
+            )}
             <input
               ref={fileRef}
               type="file"
@@ -98,7 +130,7 @@ export default function ImportPage() {
               className="hidden"
               onChange={handleFileChange}
             />
-          </label>
+          </div>
 
           <button
             type="submit"
