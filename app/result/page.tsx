@@ -50,7 +50,7 @@ function resolveProvider(aiTags: string[] | null): string {
 export default async function ResultPage({ searchParams }: Props) {
   const params = await searchParams
   const token = params.t?.trim()
-  if (!token) redirect('/bcr')
+  if (!token) redirect('/pulso')
 
   const data = await getResultByToken(token)
 

@@ -21,7 +21,7 @@ Debe sentirse como un "chequeo inteligente" institucional serio, NO como un Goog
 - Vercel — deploy
 
 ## Arquitectura clave
-- Acceso por token único por persona (`/bcr?t=TOKEN`), sin login tradicional
+- Acceso por token único por persona (`/pulso?t=TOKEN`), sin login tradicional
 - Token tiene estados: `unused` → `used` / `expired`
 - Token se marca `used` SOLO al completar, no al abrir la URL
 - Admin con autenticación por email + OTP (Resend)

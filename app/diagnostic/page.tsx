@@ -150,7 +150,7 @@ export default function DiagnosticPage() {
     const sid = get('diagnostic_session')
     const pid = get('diagnostic_participant')
     const tok = get('diagnostic_token')
-    if (!sid || !pid || !tok) { router.replace('/bcr'); return }
+    if (!sid || !pid || !tok) { router.replace('/pulso'); return }
     setSessionId(sid)
     setParticipantId(pid)
     setToken(tok)

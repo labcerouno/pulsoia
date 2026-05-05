@@ -127,7 +127,7 @@ export async function importParticipants(formData: FormData): Promise<ImportResu
           full_name: row.full_name,
           corporate_email: row.corporate_email,
           access_token: existing.access_token,
-          link: `${appUrl}/bcr?t=${existing.access_token}`,
+          link: `${appUrl}/pulso?t=${existing.access_token}`,
         })
         continue
       }
@@ -156,7 +156,7 @@ export async function importParticipants(formData: FormData): Promise<ImportResu
         full_name: row.full_name,
         corporate_email: row.corporate_email,
         access_token: token,
-        link: `${appUrl}/bcr?t=${token}`,
+        link: `${appUrl}/pulso?t=${token}`,
       })
     } catch (err) {
       errors.push(`${row.corporate_email}: ${(err as Error).message}`)
@@ -383,7 +383,7 @@ export async function getParticipantsAdmin(company?: string): Promise<Participan
       completed_at: p.completed_at,
       token_status: p.token_status,
       status_label: done ? 'Concluida / PDF listo' : 'Pendiente',
-      link: `${appUrl}/bcr?t=${p.access_token}`,
+      link: `${appUrl}/pulso?t=${p.access_token}`,
     }
   })
 }

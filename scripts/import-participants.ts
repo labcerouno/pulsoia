@@ -66,7 +66,7 @@ async function main() {
 
     if (existing) {
       console.log(`[SKIP]    ${row.corporate_email} — already exists`)
-      console.log(`          ${appUrl}/bcr?t=${existing.access_token}`)
+      console.log(`          ${appUrl}/pulso?t=${existing.access_token}`)
       skipped++
       continue
     }
@@ -90,7 +90,7 @@ async function main() {
     }
 
     console.log(`[OK]      ${row.full_name} <${row.corporate_email}>`)
-    console.log(`          ${appUrl}/bcr?t=${token}`)
+    console.log(`          ${appUrl}/pulso?t=${token}`)
     imported++
   }
 

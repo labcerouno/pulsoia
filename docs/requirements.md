@@ -9,7 +9,7 @@
 - Ejemplo: `7fK29xQmA91bRsT3`
 
 ### Flujo
-- URL de acceso: `/bcr?t=TOKEN_UNICO`
+- URL de acceso: `/pulso?t=TOKEN_UNICO`
 - Al abrir la URL: validar token, mostrar nombre si es válido, NO marcarlo como usado aún
 - Al completar el diagnóstico: marcar token como `used` y `completed_at`
 - Si abandona a mitad: puede retomar mientras token siga `unused`
@@ -48,8 +48,8 @@ Implementar al menos una de las dos. Ambas si es razonable.
 ### Output esperado
 Lista de links:
 ```
-Martín García — https://app.com/bcr?t=7fK29xQmA91bRsT3
-Ana López     — https://app.com/bcr?t=9mQ38yNpB02cUwV4
+Martín García — https://app.com/pulso?t=7fK29xQmA91bRsT3
+Ana López     — https://app.com/pulso?t=9mQ38yNpB02cUwV4
 ```
 
 ---
