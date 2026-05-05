@@ -227,10 +227,18 @@ export default function DiagnosticPage() {
     setStep(previous)
   }
 
-  async function finish() {
+  async function finish(pendingSave?: Promise<unknown>) {
     if (!sessionId || !participantId || !token) return
+
+    // Switch UI to processing state immediately before any network wait.
     setStep('completing')
+    pushAssistant('Estamos generando tu informe...')
     setIsTyping(true)
+
+    if (pendingSave) {
+      await pendingSave
+    }
+
     const result = await completeSession(sessionId, participantId, token)
     if (result.error) {
       setIsTyping(false)
@@ -334,14 +342,15 @@ export default function DiagnosticPage() {
     if (isSubmitting) return
     setIsSubmitting(true)
     const text = q6Opportunity.trim()
+    const savePromise = text ? save('q6_opportunity_raw', text) : Promise.resolve()
     if (text) {
       pushUser(text)
-      await save('q6_opportunity_raw', text)
     }
     if (!text || !needsFollowupQ6(text)) {
       setIsSubmitting(false)
-      await finish()
+      await finish(savePromise)
     } else {
+      await savePromise
       setIsSubmitting(false)
       await advanceTo('q6f')
     }
@@ -351,12 +360,12 @@ export default function DiagnosticPage() {
     if (isSubmitting) return
     setIsSubmitting(true)
     const text = q6Followup.trim()
+    const savePromise = text ? save('q6_followup_raw', text) : Promise.resolve()
     if (text) {
       pushUser(text)
-      await save('q6_followup_raw', text)
     }
     setIsSubmitting(false)
-    await finish()
+    await finish(savePromise)
   }
 
   function toggleQ3(opt: string) {

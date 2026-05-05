@@ -12,6 +12,7 @@ export interface Participant {
   id: string
   full_name: string
   corporate_email: string
+  company: string | null
   area: string | null
   management_unit: string | null
   role: string | null
@@ -57,6 +58,10 @@ export interface Response {
   success_case_summary: string | null
   strength_summary: string | null
   next_step_recommendation: string | null
+  action_plan_intro: string | null
+  action_plan_prompt: string | null
+  result_headline: string | null
+  result_congrats: string | null
   score_usage: number | null
   score_integration: number | null
   score_value_signal: number | null

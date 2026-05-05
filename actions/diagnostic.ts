@@ -3,6 +3,8 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { computeScores } from '@/lib/scoring'
 import { enrichResponse } from '@/lib/ai/enrichment'
+import { buildActionPlan, toSecondPerson } from '@/lib/action-plan'
+import { getHeadline, shortCongrats } from '@/lib/result-texts'
 import type { ProfileLabel } from '@/lib/supabase/types'
 
 type DiagnosticStep = 'q1' | 'q2' | 'q3' | 'q4' | 'q4f' | 'q5' | 'q6' | 'q6f'
@@ -279,9 +281,34 @@ export async function completeSession(
       score_total: scores.score_total,
     })
 
+    // Fetch participant area/role to compute the action plan prompt
+    const { data: participant } = await supabase
+      .from('participants')
+      .select('area, role')
+      .eq('id', participantId)
+      .single()
+
+    // Build and persist the action plan texts shown in result/PDF
+    const STEP_BY_LEVEL: Record<ProfileLabel, string> = {
+      OBSERVADOR: 'Defini una tarea puntual de menos de 20 minutos y usá IA hoy para resolver solo esa parte. Medí tiempo antes y después.',
+      EXPLORADOR: 'Elegí una tarea semanal concreta (reporte, resumen o análisis), creá un mini flujo con IA y repetilo durante 2 semanas.',
+      'USUARIO ACTIVO': 'Tomá un proceso real de tu área y estandarizalo con checklist: entrada, validación y salida. Esto te sube calidad y velocidad.',
+      MULTIPLICADOR: 'Armá un caso replicable de tu equipo con impacto medible (tiempo, errores, retrabajo) y compartilo en una sesión corta.',
+      REFERENTE: 'Definí un plan de adopción por frente (operación, análisis, comunicación) y asigná un responsable por frente con objetivo semanal.',
+    }
+    const nextStep = toSecondPerson(enrichment.next_step_recommendation || STEP_BY_LEVEL[scores.profile_label])
+    const actionPlan = buildActionPlan({
+      profile: scores.profile_label,
+      opportunity: response.q6_opportunity_raw,
+      area: participant?.area ?? null,
+      role: participant?.role ?? null,
+      tools: response.q1_tools_used,
+      nextStep,
+    })
+
     const now = new Date().toISOString()
 
-    // Update response with scores + enrichment
+    // Update response with scores + enrichment + action plan texts
     await supabase
       .from('responses')
       .update({
@@ -294,6 +321,10 @@ export async function completeSession(
         success_case_summary: enrichment.success_case_summary,
         strength_summary: enrichment.strength_summary,
         next_step_recommendation: enrichment.next_step_recommendation,
+        action_plan_intro: actionPlan.intro,
+        action_plan_prompt: actionPlan.prompt,
+        result_headline: getHeadline(scores.profile_label),
+        result_congrats: shortCongrats(scores.profile_label),
         updated_at: now,
       })
       .eq('session_id', sessionId)

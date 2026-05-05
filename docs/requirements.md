@@ -19,7 +19,7 @@
 
 ### Personalización
 Mostrar nombre al entrar:
-> "Hola Martín. Este acceso fue asignado a tu participación en el Pulse IA BCR."
+> "Hola Martín. Este acceso fue asignado a tu participación en el diagnóstico Pulso IA."
 
 ---
 

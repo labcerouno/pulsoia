@@ -1,8 +1,41 @@
 'use server'
 
+import { cookies } from 'next/headers'
 import { createServerClient } from '@/lib/supabase/server'
-import { parseCsvParticipants, buildResultsCsv } from '@/lib/csv'
+import { parseCsvParticipants, buildParticipantsCsv, buildResultsCsv } from '@/lib/csv'
 import { generateToken } from '@/lib/tokens'
+
+// Helper to get current user ID from cookies
+async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies()
+    return cookieStore.get('admin_user_id')?.value || null
+  } catch {
+    return null
+  }
+}
+
+function normalizeCompanyFilter(company?: string | null): string | null {
+  const value = (company || '').trim()
+  return value.length > 0 ? value : null
+}
+
+export async function getCompanyOptions(): Promise<string[]> {
+  const userId = await getCurrentUserId()
+  if (!userId) return []
+
+  const supabase = createServerClient()
+  const { data, error } = await supabase
+    .from('participants')
+    .select('company')
+    .eq('imported_by_user_id', userId)
+
+  if (error || !data) return []
+
+  return Array.from(new Set(data.map((r) => r.company).filter((c): c is string => !!c && c.trim().length > 0))).sort(
+    (a, b) => a.localeCompare(b, 'es')
+  )
+}
 
 export interface ImportResult {
   success: boolean
@@ -18,10 +51,18 @@ export interface ImportResult {
 }
 
 export async function importParticipants(formData: FormData): Promise<ImportResult> {
+  const userId = await getCurrentUserId()
+  if (!userId) return { success: false, imported: 0, skipped: 0, errors: ['Usuario no autenticado'], participants: [] }
+
   const file = formData.get('file') as File | null
+  const company = String(formData.get('company') || '').trim()
 
   if (!file) {
     return { success: false, imported: 0, skipped: 0, errors: ['No se proporcionó archivo'], participants: [] }
+  }
+
+  if (!company) {
+    return { success: false, imported: 0, skipped: 0, errors: ['Debes indicar el nombre de la empresa'], participants: [] }
   }
 
   const text = await file.text()
@@ -72,12 +113,14 @@ export async function importParticipants(formData: FormData): Promise<ImportResu
       const { error } = await supabase.from('participants').insert({
         full_name: row.full_name,
         corporate_email: row.corporate_email,
+        company,
         area: row.area || null,
         management_unit: row.management_unit || null,
         role: row.role || null,
         access_token: token,
         token_status: 'unused',
         invited_at: new Date().toISOString(),
+        imported_by_user_id: userId,
       })
 
       if (error) {
@@ -114,21 +157,45 @@ export interface DashboardStats {
   profile_distribution: Record<string, number>
 }
 
-export async function getStats(): Promise<DashboardStats> {
-  const supabase = createServerClient()
+export async function getStats(company?: string): Promise<DashboardStats> {
+  const userId = await getCurrentUserId()
+  if (!userId) return { total_invited: 0, total_started: 0, total_completed: 0, completion_rate: 0, avg_score: null, profile_distribution: {} }
 
-  const { data: participants } = await supabase
+  const supabase = createServerClient()
+  const companyFilter = normalizeCompanyFilter(company)
+
+  let participantsQuery = supabase
     .from('participants')
-    .select('token_status, started_at, completed_at')
+    .select('id, token_status, started_at, completed_at')
+    .eq('imported_by_user_id', userId)
+
+  if (companyFilter) {
+    participantsQuery = participantsQuery.eq('company', companyFilter)
+  }
+
+  const { data: participants } = await participantsQuery
 
   const total_invited = participants?.length ?? 0
   const total_started = participants?.filter(p => p.started_at !== null).length ?? 0
   const total_completed = participants?.filter(p => p.completed_at !== null).length ?? 0
   const completion_rate = total_invited > 0 ? Math.round((total_completed / total_invited) * 100) : 0
 
+  const participantIds = participants?.map((p) => p.id) ?? []
+  if (participantIds.length === 0) {
+    return {
+      total_invited,
+      total_started,
+      total_completed,
+      completion_rate,
+      avg_score: null,
+      profile_distribution: {},
+    }
+  }
+
   const { data: responses } = await supabase
     .from('responses')
-    .select('score_total, profile_label')
+    .select('score_total, profile_label, participant_id')
+    .in('participant_id', participantIds)
     .not('score_total', 'is', null)
 
   const scores = responses?.map(r => r.score_total).filter((s): s is number => s !== null) ?? []
@@ -172,14 +239,25 @@ export interface ResultRow {
   ai_summary: string | null
 }
 
-export async function getResults(): Promise<ResultRow[]> {
-  const supabase = createServerClient()
+export async function getResults(company?: string): Promise<ResultRow[]> {
+  const userId = await getCurrentUserId()
+  if (!userId) return []
 
-  const { data: participants } = await supabase
+  const supabase = createServerClient()
+  const companyFilter = normalizeCompanyFilter(company)
+
+  let participantsQuery = supabase
     .from('participants')
     .select('id, full_name, corporate_email, area, management_unit, role, completed_at')
+    .eq('imported_by_user_id', userId)
     .eq('token_status', 'used')
     .order('completed_at', { ascending: false })
+
+  if (companyFilter) {
+    participantsQuery = participantsQuery.eq('company', companyFilter)
+  }
+
+  const { data: participants } = await participantsQuery
 
   if (!participants || participants.length === 0) return []
 
@@ -218,7 +296,105 @@ export async function getResults(): Promise<ResultRow[]> {
   })
 }
 
-export async function exportResultsCsv(): Promise<string> {
-  const results = await getResults()
+export async function exportResultsCsv(company?: string): Promise<string> {
+  const results = await getResults(company)
   return buildResultsCsv(results)
+}
+
+export interface ParticipantAdminRow {
+  id: string
+  full_name: string
+  corporate_email: string
+  area: string | null
+  management_unit: string | null
+  role: string | null
+  access_token: string
+  completed_at: string | null
+  token_status: 'unused' | 'used' | 'expired'
+  status_label: string
+  link: string
+}
+
+export async function getParticipantsAdmin(company?: string): Promise<ParticipantAdminRow[]> {
+  const userId = await getCurrentUserId()
+  if (!userId) return []
+
+  const supabase = createServerClient()
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const companyFilter = normalizeCompanyFilter(company)
+
+  let participantsQuery = supabase
+    .from('participants')
+    .select('id, full_name, corporate_email, area, management_unit, role, access_token, completed_at, token_status')
+    .eq('imported_by_user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (companyFilter) {
+    participantsQuery = participantsQuery.eq('company', companyFilter)
+  }
+
+  const { data: participants, error } = await participantsQuery
+
+  if (error || !participants) return []
+
+  return participants.map((p) => {
+    const done = p.token_status === 'used' && !!p.completed_at
+    return {
+      id: p.id,
+      full_name: p.full_name,
+      corporate_email: p.corporate_email,
+      area: p.area,
+      management_unit: p.management_unit,
+      role: p.role,
+      access_token: p.access_token,
+      completed_at: p.completed_at,
+      token_status: p.token_status,
+      status_label: done ? 'Concluida / PDF listo' : 'Pendiente',
+      link: `${appUrl}/bcr?t=${p.access_token}`,
+    }
+  })
+}
+
+export async function exportParticipantsCsv(company?: string): Promise<string> {
+  const rows = await getParticipantsAdmin(company)
+  return buildParticipantsCsv(
+    rows.map((r) => ({
+      full_name: r.full_name,
+      corporate_email: r.corporate_email,
+      area: r.area,
+      management_unit: r.management_unit,
+      role: r.role,
+      link: r.link,
+      status: r.status_label,
+    }))
+  )
+}
+
+export async function deleteParticipant(id: string): Promise<{ success: boolean; error?: string }> {
+  if (!id) return { success: false, error: 'ID inválido' }
+
+  const supabase = createServerClient()
+
+  const { error: responsesErr } = await supabase
+    .from('responses')
+    .delete()
+    .eq('participant_id', id)
+
+  if (responsesErr) return { success: false, error: responsesErr.message }
+
+  const { error: sessionsErr } = await supabase
+    .from('sessions')
+    .delete()
+    .eq('participant_id', id)
+
+  if (sessionsErr) return { success: false, error: sessionsErr.message }
+
+  const { error: participantErr } = await supabase
+    .from('participants')
+    .delete()
+    .eq('id', id)
+
+  if (participantErr) return { success: false, error: participantErr.message }
+
+  return { success: true }
 }

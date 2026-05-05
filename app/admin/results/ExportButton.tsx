@@ -3,18 +3,18 @@
 import { useState } from 'react'
 import { exportResultsCsv } from '@/actions/admin'
 
-export default function ExportButton() {
+export default function ExportButton({ company }: { company?: string }) {
   const [loading, setLoading] = useState(false)
 
   async function handleExport() {
     setLoading(true)
     try {
-      const csv = await exportResultsCsv()
+      const csv = await exportResultsCsv(company)
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `pulse-ia-resultados-${new Date().toISOString().slice(0, 10)}.csv`
+      a.download = `pulso-ia-resultados-${new Date().toISOString().slice(0, 10)}.csv`
       a.click()
       URL.revokeObjectURL(url)
     } finally {
