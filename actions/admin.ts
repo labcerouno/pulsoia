@@ -4,14 +4,33 @@ import { cookies } from 'next/headers'
 import { createServerClient } from '@/lib/supabase/server'
 import { parseCsvParticipants, buildParticipantsCsv, buildResultsCsv } from '@/lib/csv'
 import { generateToken } from '@/lib/tokens'
+import { hasGlobalCompanyAccess } from '@/lib/admin-access'
 
-// Helper to get current user ID from cookies
-async function getCurrentUserId(): Promise<string | null> {
+interface AdminContext {
+  userId: string | null
+  canViewAllCompanies: boolean
+}
+
+// Helper to get current admin context from cookies
+async function getCurrentAdminContext(): Promise<AdminContext> {
   try {
     const cookieStore = await cookies()
-    return cookieStore.get('admin_user_id')?.value || null
+    const userId = cookieStore.get('admin_user_id')?.value || null
+    if (!userId) return { userId: null, canViewAllCompanies: false }
+
+    const supabase = createServerClient()
+    const { data: user } = await supabase
+      .from('admin_users')
+      .select('email')
+      .eq('id', userId)
+      .single()
+
+    return {
+      userId,
+      canViewAllCompanies: hasGlobalCompanyAccess(user?.email),
+    }
   } catch {
-    return null
+    return { userId: null, canViewAllCompanies: false }
   }
 }
 
@@ -21,14 +40,19 @@ function normalizeCompanyFilter(company?: string | null): string | null {
 }
 
 export async function getCompanyOptions(): Promise<string[]> {
-  const userId = await getCurrentUserId()
-  if (!userId) return []
+  const admin = await getCurrentAdminContext()
+  if (!admin.userId) return []
 
   const supabase = createServerClient()
-  const { data, error } = await supabase
+  let query = supabase
     .from('participants')
     .select('company')
-    .eq('imported_by_user_id', userId)
+
+  if (!admin.canViewAllCompanies) {
+    query = query.eq('imported_by_user_id', admin.userId)
+  }
+
+  const { data, error } = await query
 
   if (error || !data) return []
 
@@ -51,8 +75,8 @@ export interface ImportResult {
 }
 
 export async function importParticipants(formData: FormData): Promise<ImportResult> {
-  const userId = await getCurrentUserId()
-  if (!userId) return { success: false, imported: 0, skipped: 0, errors: ['Usuario no autenticado'], participants: [] }
+  const admin = await getCurrentAdminContext()
+  if (!admin.userId) return { success: false, imported: 0, skipped: 0, errors: ['Usuario no autenticado'], participants: [] }
 
   const file = formData.get('file') as File | null
   const company = String(formData.get('company') || '').trim()
@@ -120,7 +144,7 @@ export async function importParticipants(formData: FormData): Promise<ImportResu
         access_token: token,
         token_status: 'unused',
         invited_at: new Date().toISOString(),
-        imported_by_user_id: userId,
+        imported_by_user_id: admin.userId,
       })
 
       if (error) {
@@ -158,8 +182,8 @@ export interface DashboardStats {
 }
 
 export async function getStats(company?: string): Promise<DashboardStats> {
-  const userId = await getCurrentUserId()
-  if (!userId) return { total_invited: 0, total_started: 0, total_completed: 0, completion_rate: 0, avg_score: null, profile_distribution: {} }
+  const admin = await getCurrentAdminContext()
+  if (!admin.userId) return { total_invited: 0, total_started: 0, total_completed: 0, completion_rate: 0, avg_score: null, profile_distribution: {} }
 
   const supabase = createServerClient()
   const companyFilter = normalizeCompanyFilter(company)
@@ -167,7 +191,10 @@ export async function getStats(company?: string): Promise<DashboardStats> {
   let participantsQuery = supabase
     .from('participants')
     .select('id, token_status, started_at, completed_at')
-    .eq('imported_by_user_id', userId)
+
+  if (!admin.canViewAllCompanies) {
+    participantsQuery = participantsQuery.eq('imported_by_user_id', admin.userId)
+  }
 
   if (companyFilter) {
     participantsQuery = participantsQuery.eq('company', companyFilter)
@@ -240,8 +267,8 @@ export interface ResultRow {
 }
 
 export async function getResults(company?: string): Promise<ResultRow[]> {
-  const userId = await getCurrentUserId()
-  if (!userId) return []
+  const admin = await getCurrentAdminContext()
+  if (!admin.userId) return []
 
   const supabase = createServerClient()
   const companyFilter = normalizeCompanyFilter(company)
@@ -249,9 +276,12 @@ export async function getResults(company?: string): Promise<ResultRow[]> {
   let participantsQuery = supabase
     .from('participants')
     .select('id, full_name, corporate_email, area, management_unit, role, completed_at')
-    .eq('imported_by_user_id', userId)
     .eq('token_status', 'used')
     .order('completed_at', { ascending: false })
+
+  if (!admin.canViewAllCompanies) {
+    participantsQuery = participantsQuery.eq('imported_by_user_id', admin.userId)
+  }
 
   if (companyFilter) {
     participantsQuery = participantsQuery.eq('company', companyFilter)
@@ -316,8 +346,8 @@ export interface ParticipantAdminRow {
 }
 
 export async function getParticipantsAdmin(company?: string): Promise<ParticipantAdminRow[]> {
-  const userId = await getCurrentUserId()
-  if (!userId) return []
+  const admin = await getCurrentAdminContext()
+  if (!admin.userId) return []
 
   const supabase = createServerClient()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -326,8 +356,11 @@ export async function getParticipantsAdmin(company?: string): Promise<Participan
   let participantsQuery = supabase
     .from('participants')
     .select('id, full_name, corporate_email, area, management_unit, role, access_token, completed_at, token_status')
-    .eq('imported_by_user_id', userId)
     .order('created_at', { ascending: false })
+
+  if (!admin.canViewAllCompanies) {
+    participantsQuery = participantsQuery.eq('imported_by_user_id', admin.userId)
+  }
 
   if (companyFilter) {
     participantsQuery = participantsQuery.eq('company', companyFilter)

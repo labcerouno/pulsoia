@@ -3,15 +3,9 @@
 import { Resend } from 'resend'
 import { createServerClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
+import { isAllowedAdminEmail } from '@/lib/admin-access'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-
-// Lista de emails autorizados para acceder al backoffice
-const ALLOWED_ADMIN_EMAILS = [
-  'eldersoares@gmail.com',
-  'ia@oxy46.com',
-  // Agrega más emails según necesites
-]
 
 function generateOTP(): string {
   // Generate 6-digit OTP
@@ -23,7 +17,7 @@ export async function requestOTP(email: string) {
     const normalizedEmail = email.toLowerCase().trim()
 
     // Verify email is in allowed list
-    if (!ALLOWED_ADMIN_EMAILS.includes(normalizedEmail)) {
+    if (!isAllowedAdminEmail(normalizedEmail)) {
       return { success: false, message: 'Email no autorizado' }
     }
 
