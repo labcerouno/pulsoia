@@ -8,6 +8,26 @@ export interface CsvParticipantRow {
   role?: string
 }
 
+function normalizeHeaderName(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+}
+
+function getValueByAliases(row: Record<string, string>, aliases: string[]): string {
+  const normalizedAliasSet = new Set(aliases.map(normalizeHeaderName))
+
+  for (const [key, value] of Object.entries(row)) {
+    if (normalizedAliasSet.has(normalizeHeaderName(key))) {
+      return value || ''
+    }
+  }
+
+  return ''
+}
+
 export function parseCsvParticipants(csvContent: string): CsvParticipantRow[] {
   const records = parse(csvContent, {
     columns: true,
@@ -17,11 +37,9 @@ export function parseCsvParticipants(csvContent: string): CsvParticipantRow[] {
   }) as Record<string, string>[]
 
   return records.map((row, i) => {
-    // Support multiple possible column name variants
-    const full_name =
-      row['full_name'] || row['nombre'] || row['name'] || row['nombre_completo'] || ''
-    const corporate_email =
-      row['corporate_email'] || row['email'] || row['correo'] || row['mail'] || ''
+    // Support header aliases regardless of order/case/accents/separators.
+    const full_name = getValueByAliases(row, ['full_name', 'nombre', 'name', 'nombre_completo'])
+    const corporate_email = getValueByAliases(row, ['corporate_email', 'email', 'correo', 'mail'])
 
     if (!full_name || !corporate_email) {
       throw new Error(
@@ -32,9 +50,9 @@ export function parseCsvParticipants(csvContent: string): CsvParticipantRow[] {
     return {
       full_name: full_name.trim(),
       corporate_email: corporate_email.trim().toLowerCase(),
-      area: row['area']?.trim() || undefined,
-      management_unit: (row['management_unit'] || row['gerencia'])?.trim() || undefined,
-      role: (row['role'] || row['cargo'] || row['puesto'])?.trim() || undefined,
+      area: getValueByAliases(row, ['area']).trim() || undefined,
+      management_unit: getValueByAliases(row, ['management_unit', 'gerencia']).trim() || undefined,
+      role: getValueByAliases(row, ['role', 'cargo', 'puesto']).trim() || undefined,
     }
   })
 }
