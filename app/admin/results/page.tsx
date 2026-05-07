@@ -1,4 +1,5 @@
 import { getCompanyOptions, getResults } from '@/actions/admin'
+import { RESULT_DETAIL_COLUMNS, formatResultDetailValue } from '@/lib/results-columns'
 
 export const dynamic = 'force-dynamic'
 import ExportButton from './ExportButton'
@@ -68,13 +69,13 @@ export default async function ResultsPage({ searchParams }: Props) {
           style={{ border: '1px solid #334155' }}
         >
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="min-w-max w-full text-sm">
               <thead>
                 <tr style={{ background: '#1E293B', borderBottom: '1px solid #334155' }}>
-                  {['Nombre', 'Area', 'Perfil', 'Completado'].map(h => (
+                  {['Nombre', 'Area', 'Perfil', 'Completado', ...RESULT_DETAIL_COLUMNS.map(column => column.label)].map(h => (
                     <th
                       key={h}
-                      className="text-left px-4 py-3 text-xs font-semibold tracking-wider uppercase"
+                      className="text-left px-4 py-3 text-xs font-semibold leading-snug align-top"
                       style={{ color: '#475569' }}
                     >
                       {h}
@@ -124,6 +125,11 @@ export default async function ResultsPage({ searchParams }: Props) {
                             })
                           : '—'}
                       </td>
+                      {RESULT_DETAIL_COLUMNS.map((column) => (
+                        <td key={column.key} className="px-4 py-3 align-top whitespace-pre-wrap" style={{ color: '#94A3B8', minWidth: 220 }}>
+                          {formatResultDetailValue(r[column.key], '—')}
+                        </td>
+                      ))}
                     </tr>
                   )
                 })}

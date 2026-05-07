@@ -1,4 +1,5 @@
 import { parse } from 'csv-parse/sync'
+import { RESULT_DETAIL_COLUMNS, formatResultDetailValue, type ResultDetailFields } from '@/lib/results-columns'
 
 export interface CsvParticipantRow {
   full_name: string
@@ -71,10 +72,7 @@ export function buildResultsCsv(
     score_integration: number | null
     score_value_signal: number | null
     score_opportunity_clarity: number | null
-    q5_barrier: string | null
-    has_success_case: boolean
-    next_step_recommendation: string | null
-  }>
+  } & ResultDetailFields>
 ): string {
   const headers = [
     'Nombre',
@@ -89,9 +87,7 @@ export function buildResultsCsv(
     'Score Integración',
     'Score Valor',
     'Score Oportunidad',
-    'Barrera Principal',
-    'Tiene Caso de Exito',
-    'Próximo Paso',
+    ...RESULT_DETAIL_COLUMNS.map(column => column.label),
   ]
 
   const escape = (v: string | null | undefined | boolean | number) => {
@@ -116,9 +112,7 @@ export function buildResultsCsv(
     escape(r.score_integration),
     escape(r.score_value_signal),
     escape(r.score_opportunity_clarity),
-    escape(r.q5_barrier),
-    escape(r.has_success_case ? 'Sí' : 'No'),
-    escape(r.next_step_recommendation),
+    ...RESULT_DETAIL_COLUMNS.map(column => escape(formatResultDetailValue(r[column.key]))),
   ])
 
   return [headers.join(','), ...rows.map(r => r.join(','))].join('\n')

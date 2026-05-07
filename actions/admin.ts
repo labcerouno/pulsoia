@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@/lib/supabase/server'
 import { parseCsvParticipants, buildParticipantsCsv, buildResultsCsv } from '@/lib/csv'
+import type { ResultDetailFields } from '@/lib/results-columns'
 import { generateToken } from '@/lib/tokens'
 import { hasGlobalCompanyAccess } from '@/lib/admin-access'
 
@@ -245,7 +246,7 @@ export async function getStats(company?: string): Promise<DashboardStats> {
   }
 }
 
-export interface ResultRow {
+export interface ResultRow extends ResultDetailFields {
   id: string
   full_name: string
   corporate_email: string
@@ -259,11 +260,6 @@ export interface ResultRow {
   score_integration: number | null
   score_value_signal: number | null
   score_opportunity_clarity: number | null
-  q5_barrier: string | null
-  has_success_case: boolean
-  next_step_recommendation: string | null
-  strength_summary: string | null
-  ai_summary: string | null
 }
 
 export async function getResults(company?: string): Promise<ResultRow[]> {
@@ -294,7 +290,7 @@ export async function getResults(company?: string): Promise<ResultRow[]> {
   const { data: responses } = await supabase
     .from('responses')
     .select(
-      'participant_id, score_total, profile_label, score_usage, score_integration, score_value_signal, score_opportunity_clarity, q5_barrier, has_success_case, next_step_recommendation, strength_summary, ai_summary'
+      'participant_id, score_total, profile_label, score_usage, score_integration, score_value_signal, score_opportunity_clarity, q1_tools_used, q2_integration, q3_use_cases, q3_use_cases_other, q4_success_case_raw, q4_followup_raw, q5_barrier, q5_barrier_other, q6_opportunity_raw, q6_followup_raw, ai_summary, ai_tags, barrier_tags, opportunity_tags, has_success_case, success_case_summary, strength_summary, next_step_recommendation'
     )
     .in('participant_id', participants.map(p => p.id))
     .not('score_total', 'is', null)
@@ -317,11 +313,24 @@ export async function getResults(company?: string): Promise<ResultRow[]> {
       score_integration: r?.score_integration ?? null,
       score_value_signal: r?.score_value_signal ?? null,
       score_opportunity_clarity: r?.score_opportunity_clarity ?? null,
+      q1_tools_used: r?.q1_tools_used ?? null,
+      q2_integration: r?.q2_integration ?? null,
+      q3_use_cases: r?.q3_use_cases ?? null,
+      q3_use_cases_other: r?.q3_use_cases_other ?? null,
+      q4_success_case_raw: r?.q4_success_case_raw ?? null,
+      q4_followup_raw: r?.q4_followup_raw ?? null,
       q5_barrier: r?.q5_barrier ?? null,
+      q5_barrier_other: r?.q5_barrier_other ?? null,
+      q6_opportunity_raw: r?.q6_opportunity_raw ?? null,
+      q6_followup_raw: r?.q6_followup_raw ?? null,
+      ai_summary: r?.ai_summary ?? null,
+      ai_tags: r?.ai_tags ?? null,
+      barrier_tags: r?.barrier_tags ?? null,
+      opportunity_tags: r?.opportunity_tags ?? null,
       has_success_case: r?.has_success_case ?? false,
+      success_case_summary: r?.success_case_summary ?? null,
       next_step_recommendation: r?.next_step_recommendation ?? null,
       strength_summary: r?.strength_summary ?? null,
-      ai_summary: r?.ai_summary ?? null,
     }
   })
 }
