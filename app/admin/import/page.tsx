@@ -83,7 +83,7 @@ export default function ImportPage() {
         <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>area</code>,{' '}
         <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>management_unit</code>,{' '}
         <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>role</code>.
-        También acepta columnas en español: <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>nombre</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>email</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>area</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>responde a, cargo</code>.
+        También acepta columnas en español: <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>nombre</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>email</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>area</code>, <code className="px-1 rounded text-xs" style={{ background: '#1E293B', color: '#93C5FD' }}>, responde a, cargo</code>.
       </p>
 
       <div className="rounded-2xl p-8 mb-6" style={{ background: '#1E293B', border: '1px solid #334155' }}>
