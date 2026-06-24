@@ -100,12 +100,13 @@ function buildConcretePrompt(params: {
   return `Actuá como un ${expert}. Quiero mejorar esta tarea en los próximos 30 días: "${params.opportunity}". Tomá este contexto: [tipo de empresa o rubro: ${area}], [rol: ${role}], [producto/servicio/tarea: completar], [forma actual de hacerlo / canal / proceso: completar], [tipo de cliente o área: ${area}], [principal problema: completar], [herramientas que usa: ${tools}]. Dame 5 acciones concretas para mejorar esto en 30-90 días, indicá cuáles puedo potenciar con IA, proponé un plan simple de 4 semanas y definí las métricas clave para seguimiento. Cerrá con una respuesta práctica, específica, priorizada por impacto rápido y con primeros pasos para hoy.`
 }
 
-function buildDiscoveryPrompt(params: { area: string | null; role: string | null; tools: string | null }): string {
+function buildDiscoveryPrompt(params: { profile: ProfileLabel; area: string | null; role: string | null; tools: string | null }): string {
+  const profile = params.profile
   const area = params.area || 'completar'
   const role = params.role || 'completar'
   const tools = params.tools || 'completar'
 
-  return `Actuá como un experto en adopcion de IA aplicada al trabajo diario. Contexto: [rol: ${role}], [tipo de empresa o rubro: ${area}], [principales responsabilidades: completar], [herramientas que usa: ${tools}]. Ayudame a detectar 5 tareas concretas donde IA pueda ahorrar tiempo, vender mas, reducir errores o mejorar calidad. Luego resumilas en los 3 casos de uso mas prometedores y elegi el de mayor impacto para los proximos 30 dias. Para ese caso ganador, proponé un primer caso de uso simple y realista, con pasos de implementacion en 4 semanas, riesgos a evitar y metricas minimas para medir resultado. Respondé en formato práctico, específico y priorizado.`
+  return `Actuá como un experto en adopción de IA aplicada al trabajo diario. La persona tiene perfil ${profile} y trabaja como ${role} en el rubro ${area}. Usa hoy estas herramientas: ${tools}. Diseñá un plan personalizado de 30 días para pasar de ese perfil a un uso más consistente y valioso de IA. Proponé 5 tareas concretas donde pueda ahorrar tiempo, reducir errores o mejorar calidad, priorizá las 3 de mayor impacto y elegí 1 caso piloto simple para arrancar esta semana. Cerrá con pasos semanales, riesgos a evitar y métricas mínimas para seguir el avance. Respondé en formato práctico, específico y priorizado.`
 }
 
 export function buildActionPlan(input: {
@@ -122,7 +123,7 @@ export function buildActionPlan(input: {
     return {
       intro:
         'Tu respuesta sobre la tarea a mejorar quedó abierta. Para que avances igual hoy, copiá este prompt y usalo como punto de partida.',
-      prompt: buildDiscoveryPrompt({ area: input.area, role: input.role, tools: input.tools }),
+      prompt: buildDiscoveryPrompt({ profile: input.profile, area: input.area, role: input.role, tools: input.tools }),
       isFallback: true,
     }
   }

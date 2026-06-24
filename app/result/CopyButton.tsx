@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import styles from './result.module.css'
 
 export default function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
@@ -26,12 +27,7 @@ export default function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-      style={{
-        background: copied ? '#4CAF8A' : '#3D4F5A',
-        color: copied ? '#fff' : '#CBCBD0',
-        fontFamily: 'inherit',
-      }}
+      className={styles.copyBtn}
     >
       {copied ? '¡Copiado!' : 'Copiar'}
     </button>

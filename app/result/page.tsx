@@ -5,20 +5,9 @@ import type { ProfileLabel } from '@/lib/supabase/types'
 import CopyButton from './CopyButton'
 import { buildActionPlan, toSecondPerson } from '@/lib/action-plan'
 import { getHeadline, shortCongrats } from '@/lib/result-texts'
+import styles from './result.module.css'
 
 export const dynamic = 'force-dynamic'
-
-const C = {
-  bg: '#222B2E',
-  surface: '#35424C',
-  border: '#3D4F5A',
-  text: '#FAFAFA',
-  textMuted: '#9599A2',
-  textDim: '#7B818C',
-  cyan: '#6CC5DA',
-  green: '#61D49A',
-  amber: '#E8A83E',
-}
 
 interface Props {
   searchParams: Promise<{ t?: string }>
@@ -56,12 +45,10 @@ export default async function ResultPage({ searchParams }: Props) {
 
   if (!data.found || !data.participant || !data.response) {
     return (
-      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', background: C.bg }}>
-        <div style={{ width: '100%', maxWidth: 360, textAlign: 'center' }}>
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '40px 24px' }}>
-            <h2 style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 8 }}>Resultado no disponible</h2>
-            <p style={{ fontSize: 13, color: C.textMuted }}>No encontramos un diagnostico completado para este acceso.</p>
-          </div>
+      <main className={styles.errorShell}>
+        <div className={styles.errorCard}>
+          <h2 className={styles.errorTitle}>Resultado no disponible</h2>
+          <p className={styles.errorText}>No encontramos un diagnostico completado para este acceso.</p>
         </div>
       </main>
     )
@@ -84,38 +71,37 @@ export default async function ResultPage({ searchParams }: Props) {
   const downloadHref = `/api/result/pdf?t=${encodeURIComponent(token)}`
 
   return (
-    <main style={{ minHeight: '100vh', background: C.bg, padding: '0 0 52px' }}>
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 16px' }}>
-        <div style={{ padding: '20px 0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${C.border}`, marginBottom: 22 }}>
-          <div style={{ background: '#FAFAFA', borderRadius: 6, padding: '5px 10px', display: 'inline-flex', alignItems: 'center' }}>
-            <Image src="/logo-oxy.png" alt="Oxy46" width={60} height={22} style={{ objectFit: 'contain', display: 'block' }} />
+    <main className={styles.page}>
+      <div className={styles.shell}>
+        <div className={styles.head}>
+          <div className={styles.logoChip}>
+            <Image src="/logo-oxy.png" alt="OXY46" width={108} height={30} style={{ objectFit: 'contain', display: 'block', width: 'auto', height: 'auto' }} />
           </div>
-          <p style={{ fontSize: 13, color: C.textMuted }}>{participant.full_name}</p>
+          <div className={styles.who}>{participant.full_name} · {participant.area}</div>
         </div>
+        <div className={styles.rule} />
 
-        <section style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '22px 20px', marginBottom: 14 }}>
-          <p style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.textDim, marginBottom: 8 }}>Tu resultado</p>
-          <h2 style={{ fontSize: 20, color: C.text, letterSpacing: '-0.02em', marginBottom: 8 }}>{getHeadline(profile)}</h2>
-          <p style={{ fontSize: 14, lineHeight: 1.6, color: C.textMuted }}>{shortCongrats(profile)}</p>
-          <div style={{ marginTop: 12, display: 'inline-flex', padding: '4px 10px', borderRadius: 999, border: `1px solid ${C.border}`, color: C.textDim, fontSize: 11 }}>
-            Devolucion generada con {provider}
-          </div>
+        <section className={`${styles.section} ${styles.hero}`}>
+          <div className={styles.eyebrow}>Tu resultado</div>
+          <h1 className={styles.heroTitle}>
+            {getHeadline(profile)}<span className={styles.dot}>.</span>
+          </h1>
+          <p className={styles.sub}>{shortCongrats(profile)}</p>
+          <span className={styles.badge}>Devolución generada con {provider}</span>
         </section>
 
-        <section style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '22px 20px', marginBottom: 14 }}>
-          <p style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.textDim, marginBottom: 8 }}>
-            {isLevel1 ? 'Impulso inicial' : 'Fortaleza principal'}
-          </p>
-          <p style={{ fontSize: 14, lineHeight: 1.6, color: C.text }}>{strength}</p>
+        <section className={`${styles.section} ${styles.hairlineTop}`}>
+          <div className={styles.eyebrow}>{isLevel1 ? 'Impulso inicial' : 'Fortaleza principal'}</div>
+          <p className={styles.lead}>{strength}</p>
         </section>
 
         {isLevel1 ? (
-          <section style={{ background: C.surface, border: `1px solid ${C.amber}55`, borderRadius: 16, padding: '22px 20px', marginBottom: 14 }}>
-            <p style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.amber, marginBottom: 10 }}>Tips rapidos para arrancar</p>
-            <ul style={{ display: 'grid', gap: 8, color: C.textMuted, fontSize: 14, lineHeight: 1.5 }}>
+          <section className={`${styles.section} ${styles.hairlineTop}`}>
+            <div className={styles.eyebrow}>Tips rápidos para arrancar</div>
+            <ul style={{ display: 'grid', gap: 8, color: '#5b6573', fontSize: 14, lineHeight: 1.5, paddingLeft: 0, margin: 0 }}>
               {LEVEL1_TIPS.map((tip) => (
                 <li key={tip} style={{ listStyle: 'none', display: 'flex', gap: 8 }}>
-                  <span style={{ color: C.amber }}>•</span>
+                  <span style={{ color: '#8a6f44' }}>•</span>
                   <span>{tip}</span>
                 </li>
               ))}
@@ -123,48 +109,33 @@ export default async function ResultPage({ searchParams }: Props) {
           </section>
         ) : null}
 
-        <section style={{ background: C.surface, border: `1px solid ${C.green}50`, borderRadius: 16, padding: '22px 20px' }}>
-          <p style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.green, marginBottom: 8 }}>Próximo paso sugerido</p>
-          <p style={{ fontSize: 14, lineHeight: 1.6, color: C.textMuted, marginBottom: 12 }}>{actionPlan.intro}</p>
+        <section className={`${styles.section} ${styles.hairlineTop}`}>
+          <div className={styles.eyebrow}>Próximo paso sugerido</div>
+          <p className={styles.stepIntro}>{actionPlan.intro}</p>
 
-          <div style={{ position: 'relative', borderRadius: 10, border: `1px solid ${C.border}`, background: '#1A2B2E', padding: '14px 14px', marginBottom: 12 }}>
-            <CopyButton text={actionPlan.prompt} />
-            <p style={{ color: '#CBCBD0', fontSize: 12.5, lineHeight: 1.6, paddingRight: 78, whiteSpace: 'pre-wrap' }}>{actionPlan.prompt}</p>
+          <div className={styles.card}>
+            <div className={styles.cardEyebrow}>Prompt para empezar</div>
+            <div className={styles.promptWrap}>
+              <div className={styles.promptBox}>
+                <p className={styles.promptText}>{actionPlan.prompt}</p>
+              </div>
+              <CopyButton text={actionPlan.prompt} />
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gap: 10 }}>
-            <a
-              href={downloadHref}
-              download
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: 42,
-                borderRadius: 10,
-                border: `1px solid ${C.green}`,
-                background: `${C.green}22`,
-                color: C.text,
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: 13,
-                padding: '8px 12px',
-              }}
-            >
-              Descargar esta devolución en PDF
-            </a>
-          </div>
+          <a href={downloadHref} download className={styles.downloadBtn}>
+            Descargar esta devolución en PDF
+          </a>
         </section>
 
-        <section style={{ marginTop: 16, borderRadius: 12, padding: '16px 14px', border: `1px solid ${C.border}`, background: '#2B3942' }}>
-          <p style={{ fontSize: 13, lineHeight: 1.6, color: C.textMuted }}>
-            Nos vemos en la próxima sesión en vivo del programa de capacitación de IA. Traé tus consultas así te podemos ayudar.
-          </p>
+        <section className={styles.note}>
+          <p>Nos vemos en la próxima sesión en vivo del programa de capacitación de IA. <em>Traé tus consultas</em> así te podemos ayudar.</p>
         </section>
 
-        <p style={{ textAlign: 'center', fontSize: 11, color: C.textDim, marginTop: 26, letterSpacing: '0.03em' }}>
-          Pulso IA · Uso interno
-        </p>
+        <footer className={styles.footer}>
+          <span>Pulso IA · Uso interno</span>
+          <span className={styles.footerGen}>Generado por OXY46</span>
+        </footer>
       </div>
     </main>
   )

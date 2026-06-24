@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { saveAnswer, completeSession, getDiagnosticSnapshot } from '@/actions/diagnostic'
+import styles from './diagnostic.module.css'
 
 // ── Options ──────────────────────────────────────────────────────────────────
 
@@ -52,26 +53,6 @@ function needsFollowupQ6(text: string) {
 }
 
 const wait = (ms: number) => new Promise<void>(res => setTimeout(res, ms))
-
-// ── Palette ──────────────────────────────────────────────────────────────────
-
-const C = {
-  bg:             '#222B2E',
-  surface:        '#2D3B42',
-  surfaceRaised:  '#35424C',
-  border:         '#3D4F5A',
-  text:           '#FAFAFA',
-  textMuted:      '#9599A2',
-  textDim:        '#7B818C',
-  cyan:           '#6CC5DA',
-  cyanDark:       '#5AB4C9',
-  userBubbleBg:   '#6CC5DA',
-  userBubbleText: '#222B2E',
-  aiBubbleBg:     '#35424C',
-  aiBubbleText:   '#FAFAFA',
-  inputBg:        '#1E2C32',
-  red:            '#E52E34',
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -408,351 +389,277 @@ export default function DiagnosticPage() {
 
   if (!sessionId) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
-        <TypingDots />
+      <div className={styles.page}>
+        <section className={styles.device}>
+          <div className={styles.inner} style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <TypingDots />
+          </div>
+        </section>
       </div>
     )
   }
 
   const currentStepNum = STEP_NUM[step] ?? 0
   const showInput = !isTyping && step !== 'init' && step !== 'completing'
+  const activeQuestion = QUESTION[step] ?? ''
 
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: C.bg }}>
+    <main className={styles.page}>
+      <section className={styles.device}>
+        <div className={styles.inner}>
 
-      {/* ── Header ── */}
-      <div style={{
-        padding: '12px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: `1px solid ${C.border}`,
-        flexShrink: 0,
-        background: C.surfaceRaised,
-      }}>
-        <div style={{ background: '#FAFAFA', borderRadius: 6, padding: '5px 10px', display: 'inline-flex', alignItems: 'center' }}>
-          <Image src="/logo-oxy.png" alt="Oxy46" width={60} height={22} style={{ objectFit: 'contain', display: 'block' }} />
-        </div>
-        {currentStepNum > 0 && (
-          <span style={{ fontSize: 12, color: C.textDim, fontWeight: 500, letterSpacing: '0.04em' }}>
-            {currentStepNum} / 6
-          </span>
-        )}
-      </div>
-
-      {/* ── Progress bar ── */}
-      <div style={{ height: 2, background: C.border, flexShrink: 0 }}>
-        <div style={{
-          height: '100%',
-          background: C.cyan,
-          width: `${(currentStepNum / 6) * 100}%`,
-          transition: 'width 0.5s ease',
-        }} />
-      </div>
-
-      {/* ── Messages ── */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '20px 16px 8px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-      }}>
-        {messages.map(msg => (
-          <div
-            key={msg.id}
-            className="message-in"
-            style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}
-          >
-            {msg.role === 'assistant' && <AvatarDot />}
-            <div style={{
-              maxWidth: '78%',
-              padding: '11px 15px',
-              borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-              background: msg.role === 'user' ? C.userBubbleBg : C.aiBubbleBg,
-              color: msg.role === 'user' ? C.userBubbleText : C.aiBubbleText,
-              fontSize: 14,
-              lineHeight: 1.6,
-              fontWeight: msg.role === 'user' ? 500 : 400,
-            }}>
-              {msg.text}
+          {/* ── Header ── */}
+          <div className={styles.header}>
+            <div className={styles.logoChip}>
+              <Image src="/logo-oxy.png" alt="Oxy46" width={108} height={26} style={{ objectFit: 'contain', display: 'block', height: 'auto', width: 'auto' }} />
             </div>
+            {currentStepNum > 0 && (
+              <span className={styles.count}>
+                {currentStepNum} / 6
+              </span>
+            )}
           </div>
-        ))}
 
-        {/* Typing indicator */}
-        {isTyping && (
-          <div className="message-in" style={{ display: 'flex', alignItems: 'center' }}>
-            <AvatarDot />
-            <div style={{
-              padding: '11px 16px',
-              borderRadius: '18px 18px 18px 4px',
-              background: C.aiBubbleBg,
-              display: 'flex',
-              gap: 5,
-              alignItems: 'center',
-            }}>
-              <TypingDots />
-            </div>
+          {/* ── Progress bar ── */}
+          <div className={styles.progress}>
+            <div className={styles.progressFill} style={{ width: `${(currentStepNum / 6) * 100}%` }} />
           </div>
-        )}
 
-        <div ref={bottomRef} />
-      </div>
-
-      {/* ── Input area ── */}
-      {showInput && (
-        <div style={{ background: C.surface, borderTop: `1px solid ${C.border}`, padding: '14px 16px 20px', flexShrink: 0 }}>
-          {error && (
-            <div style={{ marginBottom: 10, padding: '8px 12px', borderRadius: 8, background: '#2D1515', border: `1px solid ${C.red}`, color: '#FF8585', fontSize: 13 }}>
-              {error}
-            </div>
-          )}
-
-          {/* Q1 */}
-          {step === 'q1' && (
-            <div>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                {([['Sí', true], ['No', false]] as const).map(([label, val]) => (
-                  <button
-                    key={label}
-                    onClick={() => setQ1Usage(val)}
-                    style={optionBtn(q1Usage === val)}
+          <div className={styles.conversation}>
+            {/* ── Messages ── */}
+            <div className={styles.chat}>
+            {messages.map((msg, idx) => {
+              const isLast = idx === messages.length - 1
+              const hideAsActiveQuestion = showInput && isLast && msg.role === 'assistant' && msg.text === activeQuestion
+              if (hideAsActiveQuestion) return null
+              return (
+                <div
+                  key={msg.id}
+                  className={`${msg.role === 'user' ? styles.msgWrapUser : styles.msgWrapBot} message-in`}
+                >
+                  <div
+                    className={`${styles.bubble} ${msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot}`}
                   >
-                    {label}
-                  </button>
-                ))}
+                    {msg.role === 'assistant' && (
+                      <svg className={styles.spark} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2l1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6L12 2z" />
+                      </svg>
+                    )}
+                    <span>{msg.text}</span>
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* Typing indicator */}
+            {isTyping && (
+              <div className={`${styles.msgWrapBot} message-in`}>
+                <div className={styles.typingBubble}>
+                  <TypingDots />
+                </div>
               </div>
-              {q1Usage === true && (
-                <textarea
-                  value={q1Tools}
-                  onChange={e => setQ1Tools(e.target.value)}
-                  placeholder="¿Cuáles? (opcional) - ChatGPT, Claude, Copilot..."
-                  rows={2}
-                  style={textareaStyle}
+            )}
+
+              <div ref={bottomRef} />
+            </div>
+
+            {/* ── Input area ── */}
+            {showInput && (
+              <div className={styles.inputArea}>
+              {activeQuestion && (
+                <div className={styles.stickyQuestion}>
+                  <div className={`${styles.bubble} ${styles.bubbleBot}`}>
+                    <svg className={styles.spark} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2l1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6L12 2z" />
+                    </svg>
+                    <span>{activeQuestion}</span>
+                  </div>
+                </div>
+              )}
+
+              {error && <div className={styles.error}>{error}</div>}
+
+              {/* Q1 */}
+              {step === 'q1' && (
+                <div>
+                  <div className={styles.options}>
+                    {([['Sí', true], ['No', false]] as const).map(([label, val]) => (
+                      <button
+                        key={label}
+                        onClick={() => setQ1Usage(val)}
+                        className={`${styles.option} ${q1Usage === val ? styles.optionSel : ''}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {q1Usage === true && (
+                    <textarea
+                      value={q1Tools}
+                      onChange={e => setQ1Tools(e.target.value)}
+                      placeholder="¿Cuáles? (opcional) - ChatGPT, Claude, Copilot..."
+                      rows={2}
+                      className={styles.textarea}
+                      style={{ marginTop: 10 }}
+                    />
+                  )}
+                  <div className={styles.actionsBar}>
+                    <StepArrows
+                      onBack={goBack}
+                      onNext={handleQ1}
+                      disableBack
+                      disableNext={isSubmitting || q1Usage === null}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Q2 */}
+              {step === 'q2' && (
+                <div>
+                  <div className={styles.options}>
+                    {Q2_OPTIONS.map(opt => (
+                      <button key={opt} onClick={() => setQ2Integration(opt)} className={`${styles.option} ${q2Integration === opt ? styles.optionSel : ''}`}>
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.actionsBar}>
+                    <StepArrows onBack={goBack} onNext={handleQ2} disableNext={isSubmitting || !q2Integration} />
+                  </div>
+                </div>
+              )}
+
+              {/* Q3 */}
+              {step === 'q3' && (
+                <div>
+                  <div className={styles.options}>
+                    {Q3_OPTIONS.map(opt => {
+                      const selected = q3Cases.includes(opt)
+                      return (
+                        <button
+                          key={opt}
+                          onClick={() => toggleQ3(opt)}
+                          className={`${styles.option} ${selected ? styles.optionSel : ''}`}
+                        >
+                          <span className={`${styles.check} ${selected ? styles.checkSel : ''}`} />
+                          {opt}
+                        </button>
+                      )
+                    })}
+                    {q3Cases.includes('Otro') && (
+                      <input
+                        ref={q3OtherRef}
+                        type="text"
+                        value={q3Other}
+                        onChange={e => setQ3Other(e.target.value)}
+                        placeholder="Describilo en una línea..."
+                        className={`${styles.inlineInput} ${highlightQ3Other ? styles.fieldHighlight : ''}`}
+                      />
+                    )}
+                  </div>
+                  <div className={styles.actionsBar}>
+                    <StepArrows onBack={goBack} onNext={handleQ3} disableNext={isSubmitting} />
+                  </div>
+                </div>
+              )}
+
+              {/* Q4 */}
+              {step === 'q4' && (
+                <TextInput
+                  value={q4Success}
+                  onChange={setQ4Success}
+                  onSubmit={handleQ4}
+                  placeholder="Qué tarea era, qué herramienta usaste, qué cambió..."
+                  skippable
+                  disabled={isSubmitting}
+                  onBack={goBack}
                 />
               )}
-              <StepArrows
-                onBack={goBack}
-                onNext={handleQ1}
-                disableBack
-                disableNext={isSubmitting || q1Usage === null}
-              />
-            </div>
-          )}
 
-          {/* Q2 */}
-          {step === 'q2' && (
-            <div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10, maxHeight: 260, overflowY: 'auto' }}>
-                {Q2_OPTIONS.map(opt => (
-                  <button key={opt} onClick={() => setQ2Integration(opt)} style={optionBtn(q2Integration === opt, true)}>
-                    {opt}
-                  </button>
-                ))}
+              {/* Q4 follow-up */}
+              {step === 'q4f' && (
+                <TextInput
+                  value={q4Followup}
+                  onChange={setQ4Followup}
+                  onSubmit={handleQ4F}
+                  placeholder="Ej: ahorré 2 horas, mejoré la calidad del informe..."
+                  skippable
+                  disabled={isSubmitting}
+                  onBack={goBack}
+                />
+              )}
+
+              {/* Q5 */}
+              {step === 'q5' && (
+                <div>
+                  <div className={styles.options}>
+                    {Q5_OPTIONS.map(opt => (
+                      <button key={opt} onClick={() => selectQ5Barrier(opt)} className={`${styles.option} ${q5Barrier === opt ? styles.optionSel : ''}`}>
+                        {opt}
+                      </button>
+                    ))}
+                    {q5Barrier === 'Otra' && (
+                      <input
+                        ref={q5OtherRef}
+                        type="text"
+                        value={q5BarrierOther}
+                        onChange={e => setQ5BarrierOther(e.target.value)}
+                        placeholder="Describí la barrera..."
+                        className={`${styles.inlineInput} ${highlightQ5Other ? styles.fieldHighlight : ''}`}
+                      />
+                    )}
+                  </div>
+                  <div className={styles.actionsBar}>
+                    <StepArrows onBack={goBack} onNext={handleQ5} disableNext={isSubmitting || !q5Barrier} />
+                  </div>
+                </div>
+              )}
+
+              {/* Q6 */}
+              {step === 'q6' && (
+                <TextInput
+                  value={q6Opportunity}
+                  onChange={setQ6Opportunity}
+                  onSubmit={handleQ6}
+                  placeholder="Ej: armar el resumen semanal, analizar datos..."
+                  skippable
+                  disabled={isSubmitting}
+                  onBack={goBack}
+                />
+              )}
+
+              {/* Q6 follow-up */}
+              {step === 'q6f' && (
+                <TextInput
+                  value={q6Followup}
+                  onChange={setQ6Followup}
+                  onSubmit={handleQ6F}
+                  placeholder="Ej: me tomaría menos tiempo, reduciría errores..."
+                  skippable
+                  disabled={isSubmitting}
+                  onBack={goBack}
+                />
+              )}
               </div>
-              <StepArrows onBack={goBack} onNext={handleQ2} disableNext={isSubmitting || !q2Integration} />
-            </div>
-          )}
+            )}
 
-          {/* Q3 */}
-          {step === 'q3' && (
-            <div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10, maxHeight: 'calc(100dvh - 230px)', overflowY: 'auto' }}>
-                {Q3_OPTIONS.map(opt => (
-                  <button
-                    key={opt}
-                    onClick={() => toggleQ3(opt)}
-                    style={{ ...optionBtn(q3Cases.includes(opt), true), display: 'flex', alignItems: 'center', gap: 10 }}
-                  >
-                    <Checkbox checked={q3Cases.includes(opt)} />
-                    {opt}
-                  </button>
-                ))}
-                {q3Cases.includes('Otro') && (
-                  <input
-                    ref={q3OtherRef}
-                    type="text"
-                    value={q3Other}
-                    onChange={e => setQ3Other(e.target.value)}
-                    placeholder="Describilo en una línea..."
-                    style={{
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      background: C.inputBg,
-                      border: `1.5px solid ${highlightQ3Other ? C.red : C.border}`,
-                      boxShadow: highlightQ3Other ? `0 0 0 2px ${C.red}33` : 'none',
-                      color: C.text,
-                      fontSize: 13,
-                      outline: 'none',
-                      fontFamily: 'inherit',
-                    }}
-                  />
-                )}
+            {/* Completing state */}
+            {step === 'completing' && !isTyping && (
+              <div className={styles.statusBar}>
+                Generando tu diagnóstico...
               </div>
-              <StepArrows onBack={goBack} onNext={handleQ3} disableNext={isSubmitting} />
-            </div>
-          )}
-
-          {/* Q4 */}
-          {step === 'q4' && (
-            <TextInput
-              value={q4Success}
-              onChange={setQ4Success}
-              onSubmit={handleQ4}
-              placeholder="Qué tarea era, qué herramienta usaste, qué cambió..."
-              skippable
-              disabled={isSubmitting}
-              onBack={goBack}
-            />
-          )}
-
-          {/* Q4 follow-up */}
-          {step === 'q4f' && (
-            <TextInput
-              value={q4Followup}
-              onChange={setQ4Followup}
-              onSubmit={handleQ4F}
-              placeholder="Ej: ahorré 2 horas, mejoré la calidad del informe..."
-              skippable
-              disabled={isSubmitting}
-              onBack={goBack}
-            />
-          )}
-
-          {/* Q5 */}
-          {step === 'q5' && (
-            <div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10, maxHeight: 'calc(100dvh - 230px)', overflowY: 'auto' }}>
-                {Q5_OPTIONS.map(opt => (
-                  <button key={opt} onClick={() => selectQ5Barrier(opt)} style={optionBtn(q5Barrier === opt, true)}>
-                    {opt}
-                  </button>
-                ))}
-                {q5Barrier === 'Otra' && (
-                  <input
-                    ref={q5OtherRef}
-                    type="text"
-                    value={q5BarrierOther}
-                    onChange={e => setQ5BarrierOther(e.target.value)}
-                    placeholder="Describí la barrera..."
-                    style={{
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      background: C.inputBg,
-                      border: `1.5px solid ${highlightQ5Other ? C.red : C.border}`,
-                      boxShadow: highlightQ5Other ? `0 0 0 2px ${C.red}33` : 'none',
-                      color: C.text,
-                      fontSize: 13,
-                      outline: 'none',
-                      fontFamily: 'inherit',
-                    }}
-                  />
-                )}
-              </div>
-              <StepArrows onBack={goBack} onNext={handleQ5} disableNext={isSubmitting || !q5Barrier} />
-            </div>
-          )}
-
-          {/* Q6 */}
-          {step === 'q6' && (
-            <TextInput
-              value={q6Opportunity}
-              onChange={setQ6Opportunity}
-              onSubmit={handleQ6}
-              placeholder="Ej: armar el resumen semanal, analizar datos..."
-              skippable
-              disabled={isSubmitting}
-              onBack={goBack}
-            />
-          )}
-
-          {/* Q6 follow-up */}
-          {step === 'q6f' && (
-            <TextInput
-              value={q6Followup}
-              onChange={setQ6Followup}
-              onSubmit={handleQ6F}
-              placeholder="Ej: me tomaría menos tiempo, reduciría errores..."
-              skippable
-              disabled={isSubmitting}
-              onBack={goBack}
-            />
-          )}
+            )}
+          </div>
         </div>
-      )}
-
-      {/* Completing state */}
-      {step === 'completing' && !isTyping && (
-        <div style={{ background: C.surface, borderTop: `1px solid ${C.border}`, padding: '20px 16px', textAlign: 'center', flexShrink: 0 }}>
-          <p style={{ color: C.textMuted, fontSize: 14 }}>Generando tu diagnóstico...</p>
-        </div>
-      )}
-    </div>
+      </section>
+    </main>
   )
-}
-
-// ── Style helpers ─────────────────────────────────────────────────────────────
-
-function optionBtn(selected: boolean, fullWidth = false): React.CSSProperties {
-  return {
-    flex: fullWidth ? undefined : 1,
-    width: fullWidth ? '100%' : undefined,
-    textAlign: fullWidth ? 'left' : 'center',
-    padding: '9px 12px',
-    borderRadius: 8,
-    fontSize: 13,
-    fontWeight: 500,
-    background: selected ? '#6CC5DA' : '#35424C',
-    color: selected ? '#222B2E' : '#FAFAFA',
-    border: `1px solid ${selected ? '#6CC5DA' : '#3D4F5A'}`,
-    cursor: 'pointer',
-    transition: 'all 0.15s',
-    fontFamily: 'inherit',
-  }
-}
-
-const textareaStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 12px',
-  borderRadius: 8,
-  background: '#1E2C32',
-  border: '1px solid #3D4F5A',
-  color: '#FAFAFA',
-  fontSize: 13,
-  resize: 'none',
-  outline: 'none',
-  marginBottom: 10,
-  fontFamily: 'inherit',
-  lineHeight: 1.5,
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-
-function AvatarDot() {
-  return (
-    <div style={{
-      width: 28,
-      height: 28,
-      borderRadius: '50%',
-      background: '#35424C',
-      border: '1px solid #3D4F5A',
-      flexShrink: 0,
-      marginRight: 8,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: 13,
-      color: '#6CC5DA',
-      fontWeight: 700,
-    }}>
-      ✦
-    </div>
-  )
-}
 
 function TypingDots() {
   return (
@@ -765,35 +672,13 @@ function TypingDots() {
             width: 7,
             height: 7,
             borderRadius: '50%',
-            background: '#9599A2',
+            background: '#8A6F44',
             display: 'block',
             animationDelay: `${i * 0.16}s`,
           }}
         />
       ))}
     </div>
-  )
-}
-
-function Checkbox({ checked }: { checked: boolean }) {
-  return (
-    <span style={{
-      width: 16,
-      height: 16,
-      borderRadius: 4,
-      border: `1.5px solid ${checked ? '#222B2E' : '#7B818C'}`,
-      background: checked ? 'rgba(34,43,46,0.25)' : 'transparent',
-      flexShrink: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-      {checked && (
-        <svg width="9" height="7" viewBox="0 0 10 8" fill="none">
-          <path d="M1 4l3 3 5-6" stroke="#222B2E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
-    </span>
   )
 }
 
@@ -809,22 +694,12 @@ function StepArrows({
   disableNext?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
+    <div className={styles.nav}>
       <button
         onClick={onBack}
         disabled={disableBack}
         aria-label="Pregunta anterior"
-        style={{
-          width: 46,
-          height: 44,
-          borderRadius: 10,
-          border: `1px solid ${disableBack ? '#3D4F5A' : '#6CC5DA'}`,
-          background: 'transparent',
-          color: disableBack ? '#7B818C' : '#6CC5DA',
-          cursor: disableBack ? 'not-allowed' : 'pointer',
-          fontSize: 20,
-          fontWeight: 700,
-        }}
+        className={styles.backBtn}
       >
         ←
       </button>
@@ -832,18 +707,9 @@ function StepArrows({
         onClick={onNext}
         disabled={disableNext}
         aria-label="Pregunta siguiente"
-        style={{
-          flex: 1,
-          height: 44,
-          borderRadius: 10,
-          border: 'none',
-          background: disableNext ? '#35424C' : '#6CC5DA',
-          color: disableNext ? '#7B818C' : '#222B2E',
-          cursor: disableNext ? 'not-allowed' : 'pointer',
-          fontSize: 20,
-          fontWeight: 700,
-        }}
+        className={styles.nextBtn}
       >
+        <span className={styles.nextDot} />
         →
       </button>
     </div>
@@ -867,67 +733,36 @@ function TextInput({ value, onChange, onSubmit, onBack, placeholder, skippable, 
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        style={textareaStyle}
+        className={styles.textarea}
         onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !disabled) onSubmit() }}
       />
-      <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
-        <button
-          onClick={onBack}
-          aria-label="Pregunta anterior"
-          style={{
-            width: 46,
-            borderRadius: 10,
-            border: '1px solid #6CC5DA',
-            background: 'transparent',
-            color: '#6CC5DA',
-            cursor: 'pointer',
-            fontSize: 20,
-            fontWeight: 700,
-          }}
-        >
-          ←
-        </button>
-        {skippable && isEmpty ? (
+      <div className={styles.actionsBar}>
+        <div className={styles.nav} style={{ marginTop: 0 }}>
+          <button
+            onClick={onBack}
+            aria-label="Pregunta anterior"
+            className={styles.backBtn}
+          >
+            ←
+          </button>
+          {skippable && isEmpty ? (
+            <button
+              onClick={onSubmit}
+              disabled={disabled}
+              className={styles.option}
+            >
+              Saltear
+            </button>
+          ) : null}
           <button
             onClick={onSubmit}
             disabled={disabled}
-            style={{
-              flex: 1,
-              padding: '12px',
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 500,
-              background: 'transparent',
-              color: '#9599A2',
-              border: '1px solid #3D4F5A',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
+            className={styles.nextBtn}
           >
-            Saltear
+            <span className={styles.nextDot} />
+            →
           </button>
-        ) : null}
-        <button
-          onClick={onSubmit}
-          disabled={disabled}
-          style={{
-            flex: 1,
-            width: '100%',
-            padding: '12px',
-            borderRadius: 10,
-            fontSize: 14,
-            fontWeight: 700,
-            background: disabled ? '#35424C' : '#6CC5DA',
-            color: disabled ? '#7B818C' : '#222B2E',
-            border: 'none',
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            transition: 'all 0.15s',
-            fontFamily: 'inherit',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          →
-        </button>
+        </div>
       </div>
     </div>
   )

@@ -1,0 +1,212 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 20px;
+  background: #f4f1ec;
+  font-family: 'Inter', 'Miranda Sans', Arial, Helvetica, sans-serif;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 420px;
+}
+
+.device {
+  width: 100%;
+  background: #f4f1ec;
+  border-radius: 26px;
+  border: 1px solid #d9d3c8;
+  box-shadow: 0 18px 50px rgba(23, 32, 43, 0.1);
+  overflow: hidden;
+}
+
+.inner {
+  padding: 30px 26px 34px;
+}
+
+.top {
+  display: flex;
+  justify-content: center;
+  padding-top: 14px;
+}
+
+.logoChip {
+  display: inline-flex;
+  align-items: center;
+}
+
+.h1 {
+  text-align: center;
+  font-size: 40px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-top: 30px;
+  color: #1b2a40;
+}
+
+.dot {
+  color: #b0152b;
+}
+
+.tagline {
+  text-align: center;
+  font-family: 'STIX Two Text', 'STIX General', Georgia, serif;
+  font-style: italic;
+  font-size: 17px;
+  color: #8a6f44;
+  margin-top: 10px;
+}
+
+.card {
+  position: relative;
+  background: #fafafa;
+  border: 1px solid #d9d3c8;
+  border-radius: 16px;
+  padding: 26px 24px;
+  margin-top: 30px;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #b0152b;
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8a6f44;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 20px;
+  height: 2px;
+  background: #b0152b;
+}
+
+.assignee {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #1b2a40;
+  margin-top: 10px;
+}
+
+.meta {
+  font-size: 14px;
+  color: #5b6573;
+  margin-top: 16px;
+  line-height: 1.55;
+}
+
+.metaStrong {
+  color: #1b2a40;
+  font-weight: 700;
+}
+
+.points {
+  list-style: none;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.point {
+  display: flex;
+  gap: 11px;
+  font-size: 14px;
+  color: #1b2a40;
+}
+
+.point::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #b0152b;
+  margin-top: 7px;
+}
+
+.startBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 24px;
+  background: #1b2a40;
+  color: #f4f1ec;
+  border: none;
+  border-radius: 11px;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-family: inherit;
+}
+
+.startBtn:hover {
+  background: #17202b;
+}
+
+.startDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #b0152b;
+}
+
+.foot {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a39c8d;
+  margin-top: 26px;
+}
+
+.statusCard {
+  position: relative;
+  background: #fafafa;
+  border: 1px solid #d9d3c8;
+  border-radius: 16px;
+  padding: 24px;
+  margin-top: 30px;
+  text-align: center;
+}
+
+.statusTitle {
+  color: #1b2a40;
+  font-size: 20px;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.statusDetail {
+  color: #5b6573;
+  font-size: 14px;
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 24px 12px;
+  }
+}
