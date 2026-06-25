@@ -9,6 +9,14 @@ import type { ProfileLabel } from '@/lib/supabase/types'
 
 type DiagnosticStep = 'q1' | 'q2' | 'q3' | 'q4' | 'q4f' | 'q5' | 'q6' | 'q6f'
 
+const TEST_TOKEN = 'TEST-MODE'
+const TEST_PARTICIPANT_ID = '00000000-0000-0000-0000-000000000001'
+const TEST_SESSION_PREFIX = 'test-'
+
+function isEphemeralTestSession(sessionId: string, participantId?: string, token?: string): boolean {
+  return sessionId.startsWith(TEST_SESSION_PREFIX) || participantId === TEST_PARTICIPANT_ID || token === TEST_TOKEN
+}
+
 const VALUE_KEYWORDS = ['ahorre', 'ahorr', 'mejore', 'mejor', 'logre', 'logr', 'reduje', 'reduj', 'automatice', 'automat']
 
 function needsFollowupQ4(text: string | null): boolean {
@@ -45,6 +53,28 @@ function getCurrentStep(response: {
   if (!response.q6_opportunity_raw) return 'q6'
   if (needsFollowupQ6(response.q6_opportunity_raw) && !response.q6_followup_raw) return 'q6f'
   return 'q6'
+}
+
+// Test mode: creates a temporary session that won't be persisted to stats
+export async function startTestSession(): Promise<{ sessionId: string; error?: string }> {
+  return { sessionId: `${TEST_SESSION_PREFIX}${crypto.randomUUID()}` }
+}
+
+// Check if a session is in test mode (won't be persisted to stats)
+async function isTestModeSession(sessionId: string): Promise<boolean> {
+  try {
+    const supabase = createServerClient()
+    const { data: session, error } = await supabase
+      .from('sessions')
+      .select('is_test_mode')
+      .eq('id', sessionId)
+      .single()
+
+    if (error || !session) return false
+    return session.is_test_mode === true
+  } catch {
+    return false
+  }
 }
 
 export async function startSession(participantId: string): Promise<{ sessionId: string; error?: string }> {
@@ -134,6 +164,15 @@ export async function saveAnswer(
   value: unknown
 ): Promise<{ error?: string }> {
   try {
+    // Test mode: don't persist answers
+    if (isEphemeralTestSession(sessionId, participantId)) {
+      return {}
+    }
+
+    if (await isTestModeSession(sessionId)) {
+      return {}
+    }
+
     const supabase = createServerClient()
 
     // Update last_activity_at on session
@@ -197,6 +236,10 @@ export async function getDiagnosticSnapshot(
   }
 }> {
   try {
+      if (isEphemeralTestSession(sessionId, participantId)) {
+        return { found: false }
+      }
+
     const supabase = createServerClient()
 
     const { data: response, error } = await supabase
@@ -231,7 +274,16 @@ export async function completeSession(
   token: string
 ): Promise<{ error?: string }> {
   try {
+    if (isEphemeralTestSession(sessionId, participantId, token)) {
+      return {}
+    }
+
     const supabase = createServerClient()
+
+    // Test mode: don't persist completion
+    if (await isTestModeSession(sessionId)) {
+      return {}
+    }
 
     // Fetch current response — use maybeSingle to avoid crash on 0 rows
     const { data: response, error: fetchError } = await supabase
@@ -417,6 +469,34 @@ export async function getResultByToken(token: string): Promise<{
   }
 }> {
   try {
+    // Test mode: return dummy result for demo purposes
+    if (token === 'TEST-MODE') {
+      return {
+        found: true,
+        participant: { full_name: 'Modo de prueba', area: null, role: null },
+        response: {
+          score_total: 6,
+          profile_label: 'USUARIO ACTIVO',
+          score_usage: 2,
+          score_integration: 2,
+          score_value_signal: 1,
+          score_opportunity_clarity: 1,
+          strength_summary: 'Estás incorporando IA en tu rutina de trabajo de forma sostenida.',
+          next_step_recommendation: 'Documentá cómo usás IA hoy y compartilo con el equipo para aprender juntos.',
+          ai_summary: 'Sesión de prueba.',
+          ai_tags: ['test-mode'],
+          has_success_case: false,
+          success_case_summary: null,
+          q1_tools_used: null,
+          q3_use_cases: null,
+          q3_use_cases_other: null,
+          q5_barrier: null,
+          q5_barrier_other: null,
+          q6_opportunity_raw: null,
+        },
+      }
+    }
+
     const supabase = createServerClient()
 
     const { data: participant, error: pErr } = await supabase
