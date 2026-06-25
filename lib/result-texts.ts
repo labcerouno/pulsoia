@@ -2,9 +2,9 @@ import type { ProfileLabel } from './supabase/types'
 
 export function getHeadline(profile: ProfileLabel): string {
   if (profile === 'OBSERVADOR') {
-    return 'Buen comienzo: estás abriendo una oportunidad concreta para mejorar tu forma de trabajo.'
+    return 'Buen comienzo: estás abriendo una oportunidad concreta para mejorar tu forma de trabajo'
   }
-  return 'Felicitaciones: ya estás construyendo una forma de trabajo más inteligente con IA.'
+  return 'Felicitaciones: ya estás construyendo una forma de trabajo más inteligente con IA'
 }
 
 export function shortCongrats(profile: ProfileLabel): string {

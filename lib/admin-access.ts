@@ -3,7 +3,8 @@ const ADMIN_EMAILS = [
   'ia@oxy46.com',
   'martincabrera@gmail.com',
   'martin@oxy46.ia',
-  'agustina@oxy46.com'
+  'agustina@oxy46.com',
+  'sabina@oxy46.com',
 ] as const
 
 export const ALLOWED_ADMIN_EMAILS: readonly string[] = ADMIN_EMAILS
