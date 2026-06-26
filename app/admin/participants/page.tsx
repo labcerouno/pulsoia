@@ -1,18 +1,20 @@
-import { getCompanyOptions, getParticipantsAdmin } from '@/actions/admin'
+import { getCompanyOptions, getEventOptions, getParticipantsAdmin } from '@/actions/admin'
 import ParticipantsTable from './participants-table'
 
 export const dynamic = 'force-dynamic'
 
 interface Props {
-  searchParams: Promise<{ company?: string }>
+  searchParams: Promise<{ company?: string; event?: string }>
 }
 
 export default async function ParticipantsPage({ searchParams }: Props) {
   const params = await searchParams
   const company = params.company?.trim() || ''
-  const [participants, companies] = await Promise.all([
-    getParticipantsAdmin(company || undefined),
-    getCompanyOptions(),
+  const eventId = params.event?.trim() || ''
+  const [participants, events, companies] = await Promise.all([
+    getParticipantsAdmin(eventId || undefined, company || undefined),
+    getEventOptions(),
+    getCompanyOptions(eventId || undefined),
   ])
 
   return (
@@ -22,6 +24,19 @@ export default async function ParticipantsPage({ searchParams }: Props) {
           Participantes
         </h1>
         <form method="get" className="flex items-center gap-2">
+          <select
+            name="event"
+            defaultValue={eventId}
+            className="rounded-lg px-3 py-2 text-sm"
+            style={{ background: '#1E293B', color: '#F8FAFC', border: '1px solid #334155' }}
+          >
+            <option value="">Todos los eventos</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.name}
+              </option>
+            ))}
+          </select>
           <select
             name="company"
             defaultValue={company}
@@ -45,7 +60,7 @@ export default async function ParticipantsPage({ searchParams }: Props) {
         </form>
       </div>
 
-      <ParticipantsTable initialRows={participants} company={company || undefined} />
+      <ParticipantsTable initialRows={participants} eventId={eventId || undefined} company={company || undefined} />
     </div>
   )
 }

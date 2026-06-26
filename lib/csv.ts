@@ -4,6 +4,7 @@ import { RESULT_DETAIL_COLUMNS, formatResultDetailValue, type ResultDetailFields
 export interface CsvParticipantRow {
   full_name: string
   corporate_email: string
+  company?: string
   area?: string
   management_unit?: string
   role?: string
@@ -51,6 +52,7 @@ export function parseCsvParticipants(csvContent: string): CsvParticipantRow[] {
     return {
       full_name: full_name.trim(),
       corporate_email: corporate_email.trim().toLowerCase(),
+      company: getValueByAliases(row, ['company', 'empresa', 'organizacion']).trim() || undefined,
       area: getValueByAliases(row, ['area']).trim() || undefined,
       management_unit: getValueByAliases(row, ['management_unit', 'gerencia']).trim() || undefined,
       role: getValueByAliases(row, ['role', 'cargo', 'puesto']).trim() || undefined,
@@ -60,6 +62,8 @@ export function parseCsvParticipants(csvContent: string): CsvParticipantRow[] {
 
 export function buildResultsCsv(
   results: Array<{
+    event_name: string | null
+    company: string | null
     full_name: string
     corporate_email: string
     area: string | null
@@ -75,6 +79,8 @@ export function buildResultsCsv(
   } & ResultDetailFields>
 ): string {
   const headers = [
+    'Evento',
+    'Empresa',
     'Nombre',
     'Email',
     'Area',
@@ -100,6 +106,8 @@ export function buildResultsCsv(
   }
 
   const rows = results.map(r => [
+    escape(r.event_name),
+    escape(r.company),
     escape(r.full_name),
     escape(r.corporate_email),
     escape(r.area),
@@ -120,6 +128,8 @@ export function buildResultsCsv(
 
 export function buildParticipantsCsv(
   rows: Array<{
+    event_name: string | null
+    company: string | null
     full_name: string
     corporate_email: string
     area: string | null
@@ -129,7 +139,7 @@ export function buildParticipantsCsv(
     status: string
   }>
 ): string {
-  const headers = ['Nombre', 'Email', 'Area', 'Gerencia', 'Cargo', 'Link', 'Estado']
+  const headers = ['Evento', 'Empresa', 'Nombre', 'Email', 'Area', 'Gerencia', 'Cargo', 'Link', 'Estado']
 
   const escape = (v: string | null | undefined | boolean | number) => {
     if (v === null || v === undefined) return ''
@@ -141,6 +151,8 @@ export function buildParticipantsCsv(
   }
 
   const data = rows.map((r) => [
+    escape(r.event_name),
+    escape(r.company),
     escape(r.full_name),
     escape(r.corporate_email),
     escape(r.area),

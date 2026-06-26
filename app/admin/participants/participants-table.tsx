@@ -4,7 +4,15 @@ import { useMemo, useState } from 'react'
 import { deleteParticipant, exportParticipantsCsv } from '@/actions/admin'
 import type { ParticipantAdminRow } from '@/actions/admin'
 
-export default function ParticipantsTable({ initialRows, company }: { initialRows: ParticipantAdminRow[]; company?: string }) {
+export default function ParticipantsTable({
+  initialRows,
+  eventId,
+  company,
+}: {
+  initialRows: ParticipantAdminRow[]
+  eventId?: string
+  company?: string
+}) {
   const [rows, setRows] = useState(initialRows)
   const [loadingExport, setLoadingExport] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -14,7 +22,7 @@ export default function ParticipantsTable({ initialRows, company }: { initialRow
   async function handleExport() {
     setLoadingExport(true)
     try {
-      const csv = await exportParticipantsCsv(company)
+      const csv = await exportParticipantsCsv(eventId, company)
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -90,7 +98,7 @@ export default function ParticipantsTable({ initialRows, company }: { initialRow
         <table className="w-full text-sm">
           <thead>
             <tr style={{ background: '#1E293B', borderBottom: '1px solid #334155' }}>
-              {['Nombre', 'Email', 'Area', 'Cargo', 'Link', 'Estado', 'Acciones'].map((h) => (
+              {['Evento', 'Empresa', 'Nombre', 'Email', 'Area', 'Cargo', 'Link', 'Estado', 'Acciones'].map((h) => (
                 <th
                   key={h}
                   className="text-left px-4 py-3 text-xs font-semibold tracking-wider uppercase"
@@ -110,6 +118,8 @@ export default function ParticipantsTable({ initialRows, company }: { initialRow
                   borderBottom: '1px solid #1E293B',
                 }}
               >
+                <td className="px-4 py-3" style={{ color: '#CBD5E1' }}>{r.event_name || '—'}</td>
+                <td className="px-4 py-3" style={{ color: '#CBD5E1' }}>{r.company || '—'}</td>
                 <td className="px-4 py-3" style={{ color: '#F8FAFC' }}>{r.full_name}</td>
                 <td className="px-4 py-3" style={{ color: '#94A3B8' }}>{r.corporate_email}</td>
                 <td className="px-4 py-3" style={{ color: '#94A3B8' }}>{r.area || '—'}</td>

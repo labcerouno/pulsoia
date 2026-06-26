@@ -1,8 +1,15 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { importParticipants } from '@/actions/admin'
+import { useState, useRef, useEffect } from 'react'
+import { getEventOptions, importParticipants } from '@/actions/admin'
 import type { ImportResult } from '@/actions/admin'
+
+interface EventOption {
+  id: string
+  name: string
+  slug: string
+  status: 'draft' | 'active' | 'closed'
+}
 
 export default function ImportPage() {
   const fileRef = useRef<HTMLInputElement>(null)
@@ -10,14 +17,38 @@ export default function ImportPage() {
   const [result, setResult] = useState<ImportResult | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [company, setCompany] = useState('')
+  const [defaultCompany, setDefaultCompany] = useState('')
+  const [eventId, setEventId] = useState('')
+  const [events, setEvents] = useState<EventOption[]>([])
+  const [loadingEvents, setLoadingEvents] = useState(true)
 
   const fileName = selectedFile?.name ?? null
+
+  useEffect(() => {
+    let mounted = true
+    async function loadEvents() {
+      setLoadingEvents(true)
+      try {
+        const list = await getEventOptions()
+        if (!mounted) return
+        setEvents(list)
+        if (list.length === 1) {
+          setEventId(list[0].id)
+        }
+      } finally {
+        if (mounted) setLoadingEvents(false)
+      }
+    }
+    void loadEvents()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const file = selectedFile
-    if (!file || !company.trim()) return
+    if (!file || !eventId) return
 
     setLoading(true)
     setResult(null)
@@ -25,7 +56,8 @@ export default function ImportPage() {
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('company', company.trim())
+      formData.append('event_id', eventId)
+      formData.append('default_company', defaultCompany.trim())
       const res = await importParticipants(formData)
       setResult(res)
     } catch (err) {
@@ -90,13 +122,33 @@ export default function ImportPage() {
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: '#94A3B8' }}>
-              Empresa
+              Evento
+            </label>
+            <select
+              value={eventId}
+              onChange={(e) => setEventId(e.target.value)}
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none"
+              style={{ background: '#0F172A', border: '1px solid #334155', color: '#F8FAFC' }}
+              disabled={loadingEvents}
+            >
+              <option value="">{loadingEvents ? 'Cargando eventos...' : 'Seleccionar evento'}</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.name} ({event.slug})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: '#94A3B8' }}>
+              Empresa por defecto (opcional)
             </label>
             <input
               type="text"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              placeholder="Nombre de la empresa"
+              value={defaultCompany}
+              onChange={(e) => setDefaultCompany(e.target.value)}
+              placeholder="Se usa si el CSV no incluye columna company/empresa"
               className="w-full rounded-xl px-4 py-3 text-sm outline-none"
               style={{ background: '#0F172A', border: '1px solid #334155', color: '#F8FAFC' }}
             />
@@ -134,12 +186,12 @@ export default function ImportPage() {
 
           <button
             type="submit"
-            disabled={!fileName || !company.trim() || loading}
+            disabled={!fileName || !eventId || loading}
             className="w-full py-3 rounded-xl text-sm font-semibold transition-colors"
             style={{
-              background: !fileName || !company.trim() || loading ? '#1E293B' : '#3B82F6',
-              color: !fileName || !company.trim() || loading ? '#475569' : '#fff',
-              border: `1px solid ${!fileName || !company.trim() || loading ? '#334155' : '#3B82F6'}`,
+              background: !fileName || !eventId || loading ? '#1E293B' : '#3B82F6',
+              color: !fileName || !eventId || loading ? '#475569' : '#fff',
+              border: `1px solid ${!fileName || !eventId || loading ? '#334155' : '#3B82F6'}`,
             }}
           >
             {loading ? 'Importando...' : 'Importar participantes'}
@@ -164,7 +216,7 @@ export default function ImportPage() {
                 <p className="text-2xl font-bold" style={{ color: '#10B981' }}>{result.imported}</p>
               </div>
               <div>
-                <p className="text-xs mb-1" style={{ color: '#64748B' }}>Ya existentes</p>
+                <p className="text-xs mb-1" style={{ color: '#64748B' }}>Omitidos</p>
                 <p className="text-2xl font-bold" style={{ color: '#F59E0B' }}>{result.skipped}</p>
               </div>
               {result.errors.length > 0 && (

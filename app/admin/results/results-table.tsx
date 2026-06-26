@@ -48,7 +48,7 @@ export default function ResultsTable({ results }: ResultsTableProps) {
       <table className="w-full text-sm">
         <thead>
           <tr style={{ background: '#1E293B', borderBottom: '1px solid #334155' }}>
-            {['Nombre', 'Area', 'Perfil', 'Completado', 'Ver más'].map((header) => (
+            {['Evento', 'Empresa', 'Nombre', 'Area', 'Perfil', 'Completado', 'Ver más'].map((header) => (
               <th
                 key={header}
                 className="text-left px-4 py-3 text-xs font-semibold leading-snug align-top"
@@ -73,6 +73,12 @@ export default function ResultsTable({ results }: ResultsTableProps) {
                     borderBottom: isExpanded ? 'none' : '1px solid #1E293B',
                   }}
                 >
+                  <td className="px-4 py-3" style={{ color: '#CBD5E1' }}>
+                    {result.event_name || '—'}
+                  </td>
+                  <td className="px-4 py-3" style={{ color: '#CBD5E1' }}>
+                    {result.company || '—'}
+                  </td>
                   <td className="px-4 py-3">
                     <div style={{ color: '#F8FAFC' }}>{result.full_name}</div>
                     <div className="text-xs" style={{ color: '#475569' }}>
@@ -126,13 +132,12 @@ export default function ResultsTable({ results }: ResultsTableProps) {
                 </tr>
                 {isExpanded ? (
                   <tr
-                    key={`${result.id}-details`}
                     style={{
                       background: rowBackground,
                       borderBottom: '1px solid #1E293B',
                     }}
                   >
-                    <td colSpan={5} className="px-4 pb-4">
+                    <td colSpan={7} className="px-4 pb-4">
                       <div
                         className="rounded-xl px-4 py-4"
                         style={{ background: '#111827', border: '1px solid #1E293B' }}

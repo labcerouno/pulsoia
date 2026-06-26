@@ -56,6 +56,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex items-center gap-6">
             {[
               { href: '/admin', label: 'Dashboard' },
+              { href: '/admin/events', label: 'Eventos' },
               { href: '/admin/results', label: 'Resultados' },
               { href: '/admin/participants', label: 'Participantes' },
               { href: '/admin/import', label: 'Importar' },

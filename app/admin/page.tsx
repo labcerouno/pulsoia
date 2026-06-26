@@ -1,4 +1,4 @@
-import { getCompanyOptions, getStats } from '@/actions/admin'
+import { getCompanyOptions, getEventOptions, getStats } from '@/actions/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,13 +12,18 @@ const PROFILE_COLORS: Record<string, string> = {
 }
 
 interface Props {
-  searchParams: Promise<{ company?: string }>
+  searchParams: Promise<{ company?: string; event?: string }>
 }
 
 export default async function AdminDashboard({ searchParams }: Props) {
   const params = await searchParams
   const company = params.company?.trim() || ''
-  const [stats, companies] = await Promise.all([getStats(company || undefined), getCompanyOptions()])
+  const eventId = params.event?.trim() || ''
+  const [events, stats, companies] = await Promise.all([
+    getEventOptions(),
+    getStats(eventId || undefined, company || undefined),
+    getCompanyOptions(eventId || undefined),
+  ])
 
   const statCards = [
     { label: 'Invitados', value: stats.total_invited },
@@ -35,6 +40,19 @@ export default async function AdminDashboard({ searchParams }: Props) {
         </h1>
 
         <form method="get" className="flex items-center gap-2">
+          <select
+            name="event"
+            defaultValue={eventId}
+            className="rounded-lg px-3 py-2 text-sm"
+            style={{ background: '#1E293B', color: '#F8FAFC', border: '1px solid #334155' }}
+          >
+            <option value="">Todos los eventos</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.name}
+              </option>
+            ))}
+          </select>
           <select
             name="company"
             defaultValue={company}

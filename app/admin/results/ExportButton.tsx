@@ -3,13 +3,13 @@
 import { useState } from 'react'
 import { exportResultsCsv } from '@/actions/admin'
 
-export default function ExportButton({ company }: { company?: string }) {
+export default function ExportButton({ eventId, company }: { eventId?: string; company?: string }) {
   const [loading, setLoading] = useState(false)
 
   async function handleExport() {
     setLoading(true)
     try {
-      const csv = await exportResultsCsv(company)
+      const csv = await exportResultsCsv(eventId, company)
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

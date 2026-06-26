@@ -1,17 +1,22 @@
-import { getCompanyOptions, getResults } from '@/actions/admin'
+import { getCompanyOptions, getEventOptions, getResults } from '@/actions/admin'
 
 export const dynamic = 'force-dynamic'
 import ExportButton from './ExportButton'
 import ResultsTable from './results-table'
 
 interface Props {
-  searchParams: Promise<{ company?: string }>
+  searchParams: Promise<{ company?: string; event?: string }>
 }
 
 export default async function ResultsPage({ searchParams }: Props) {
   const params = await searchParams
   const company = params.company?.trim() || ''
-  const [results, companies] = await Promise.all([getResults(company || undefined), getCompanyOptions()])
+  const eventId = params.event?.trim() || ''
+  const [results, events, companies] = await Promise.all([
+    getResults(eventId || undefined, company || undefined),
+    getEventOptions(),
+    getCompanyOptions(eventId || undefined),
+  ])
 
   return (
     <div>
@@ -21,6 +26,19 @@ export default async function ResultsPage({ searchParams }: Props) {
         </h1>
         <div className="flex items-center gap-2">
           <form method="get" className="flex items-center gap-2">
+            <select
+              name="event"
+              defaultValue={eventId}
+              className="rounded-lg px-3 py-2 text-sm"
+              style={{ background: '#1E293B', color: '#F8FAFC', border: '1px solid #334155' }}
+            >
+              <option value="">Todos los eventos</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.name}
+                </option>
+              ))}
+            </select>
             <select
               name="company"
               defaultValue={company}
@@ -42,7 +60,7 @@ export default async function ResultsPage({ searchParams }: Props) {
               Filtrar
             </button>
           </form>
-          <ExportButton company={company || undefined} />
+          <ExportButton eventId={eventId || undefined} company={company || undefined} />
         </div>
       </div>
 
