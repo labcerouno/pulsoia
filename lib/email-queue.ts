@@ -19,7 +19,7 @@ interface QueueEmailRow {
 }
 
 export interface EnqueueInvitationEmailResult {
-  status: 'queued' | 'already_queued' | 'already_sent'
+  status: 'sent' | 'queued' | 'already_queued' | 'already_sent'
 }
 
 export interface ProcessEmailQueueResult {
@@ -141,13 +141,75 @@ export async function enqueueInvitationEmail(participantId: string, eventId: str
     throw new Error(`No se pudo encolar email: ${insertQueueError.message}`)
   }
 
+  // Intentar envío inmediato si RESEND_API_KEY está disponible
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const from = process.env.RESEND_INVITATION_FROM || 'Pulso IA <ia@oxy46.com>'
+
+      const { error: sendError } = await resend.emails.send({
+        from,
+        to: participant.corporate_email,
+        subject: email.subject,
+        html: email.html,
+      })
+
+      if (sendError) {
+        throw new Error(JSON.stringify(sendError))
+      }
+
+      const nowIso = new Date().toISOString()
+
+      await supabase
+        .from('email_queue')
+        .update({ status: 'sent', attempts: 1, sent_at: nowIso, last_error: null })
+        .eq('participant_id', participant.id)
+        .eq('to_email', participant.corporate_email)
+        .eq('status', 'pending')
+
+      await supabase
+        .from('participants')
+        .update({ email_status: 'sent', email_sent_at: nowIso, email_error: null })
+        .eq('id', participant.id)
+
+      // Incrementar contador de cuota diaria
+      const timeZone = process.env.EMAIL_QUOTA_TIMEZONE || 'America/Argentina/Cordoba'
+      const quotaDate = getQuotaDate(timeZone)
+      const { data: usageRow } = await supabase
+        .from('email_daily_usage')
+        .select('sent_count')
+        .eq('quota_date', quotaDate)
+        .maybeSingle()
+
+      if (usageRow) {
+        await supabase
+          .from('email_daily_usage')
+          .update({ sent_count: usageRow.sent_count + 1 })
+          .eq('quota_date', quotaDate)
+      } else {
+        await supabase
+          .from('email_daily_usage')
+          .insert({ quota_date: quotaDate, sent_count: 1 })
+      }
+
+      return { status: 'sent' }
+    } catch (sendErr) {
+      // Si falla el envío inmediato, queda en cola para el cron
+      console.error('[enqueueInvitationEmail] envio inmediato fallo, queda en cola:', sendErr)
+
+      await supabase
+        .from('participants')
+        .update({ email_status: 'queued', email_error: null, email_sent_at: null })
+        .eq('id', participant.id)
+
+      return { status: 'queued' }
+    }
+  }
+
+  // Sin RESEND_API_KEY: solo encolar, el cron lo enviará
   const { error: participantUpdateError } = await supabase
     .from('participants')
-    .update({
-      email_status: 'queued',
-      email_error: null,
-      email_sent_at: null,
-    })
+    .update({ email_status: 'queued', email_error: null, email_sent_at: null })
     .eq('id', participant.id)
 
   if (participantUpdateError) {

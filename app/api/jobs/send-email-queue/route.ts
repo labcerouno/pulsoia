@@ -3,7 +3,7 @@ import { processEmailQueue } from '@/lib/email-queue'
 
 export const runtime = 'nodejs'
 
-export async function POST(request: NextRequest) {
+async function handleRun(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
 
   if (!cronSecret) {
@@ -24,4 +24,12 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : 'Error interno'
     return NextResponse.json({ ok: false, error: message }, { status: 500 })
   }
+}
+
+export async function GET(request: NextRequest) {
+  return handleRun(request)
+}
+
+export async function POST(request: NextRequest) {
+  return handleRun(request)
 }
